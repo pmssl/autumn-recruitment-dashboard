@@ -1,0 +1,18 @@
+node_modules/
+dist/
+release/
+*.tsbuildinfo
+
+# Personal recruitment data and local backups
+sync-output/
+backup/
+scripts/prepare-excel-sync.cjs
+scripts/apply-excel-sync.ps1
+*.xlsx
+*.xls
+
+# Local credentials and logs
+.env
+.env.*
+!.env.example
+*.log

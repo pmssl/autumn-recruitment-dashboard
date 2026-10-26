@@ -1,0 +1,56 @@
+{
+  "name": "autumn-recruitment-dashboard",
+  "private": true,
+  "version": "1.0.3",
+  "type": "module",
+  "main": "electron/main.cjs",
+  "description": "常驻系统托盘的个人秋招投递看板",
+  "author": "Autumn Dashboard",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "desktop": "npm run build && electron .",
+    "dist": "npm run build && electron-builder --win nsis --x64",
+    "test": "node --test electron/store.test.cjs",
+    "test:desktop": "electron electron/smoke.cjs"
+  },
+  "dependencies": {
+    "react": "latest",
+    "react-dom": "latest",
+    "xlsx": "latest"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "electron": "^42.1.0",
+    "electron-builder": "^26.0.12",
+    "@vitejs/plugin-react": "latest",
+    "typescript": "latest",
+    "vite": "latest"
+  },
+  "build": {
+    "appId": "cn.autumn.recruitment.dashboard",
+    "productName": "秋招看板",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*.cjs",
+      "!electron/**/*.test.cjs",
+      "!electron/smoke.cjs",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "artifactName": "Autumn-Dashboard-Setup-${version}.${ext}"
+    }
+  }
+}
