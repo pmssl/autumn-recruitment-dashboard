@@ -7,6 +7,7 @@
   "description": "常驻系统托盘的个人秋招投递看板",
   "author": "Autumn Dashboard",
   "scripts": {
+    "metrics": "node scripts/project-metrics.cjs",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",

@@ -1,0 +1,6 @@
+interface:
+  display_name: "项目代码量与体积统计"
+  short_description: "统计秋招看板新旧版本代码量、源码体积及安装包大小，支持报告导出"
+  default_prompt: "使用 $project-metrics 检查当前项目的代码量和安装包大小，区分 Electron 旧版与 Rust 新版。"
+policy:
+  allow_implicit_invocation: true
