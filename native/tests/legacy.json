@@ -1,0 +1,11 @@
+[
+  {
+    "id": "app-test", "company": "测试公司", "position": "后端开发", "url": "https://example.com/job",
+    "notes": "虚构测试记录，不含个人数据", "createdAt": "2026-10-01T00:00:00Z", "updatedAt": "2026-10-02T00:00:00Z",
+    "date": "2026-10-01", "excelSource": {"row": 1, "part": "test"},
+    "stages": [
+      {"id":"stage-1", "applicationId":"app-test", "type":"applied", "title":"投递", "date":"2026-10-01", "status":"completed", "sortOrder":10, "createdAt":"2026-10-01T00:00:00Z", "updatedAt":"2026-10-01T00:00:00Z"},
+      {"id":"stage-2", "applicationId":"app-test", "type":"interview", "title":"一面", "status":"pending", "sortOrder":20, "notes":"日期尚未确定", "createdAt":"2026-10-02T00:00:00Z", "updatedAt":"2026-10-02T00:00:00Z", "customField":"preserved"}
+    ]
+  }
+]

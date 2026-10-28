@@ -16,3 +16,8 @@ scripts/apply-excel-sync.ps1
 .env.*
 !.env.example
 *.log
+
+# Native rewrite build and local test data
+native/target/
+native/.dev-data/
+metrics-report/

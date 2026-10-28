@@ -1,0 +1,372 @@
+import { ComboBox, ListView, ScrollView, TextEdit, CheckBox } from "std-widgets.slint";
+
+component Action inherits Rectangle {
+    in property <string> text;
+    in property <bool> primary;
+    in property <bool> quiet;
+    in property <bool> selected;
+    in property <bool> danger;
+    in property <bool> enabled: true;
+    in property <bool> tab;
+    in property <bool> filter;
+    callback clicked();
+    min-width: caption.preferred-width + 24px;
+    preferred-height: 36px; min-height: 30px;
+    horizontal-stretch: 0; vertical-stretch: 0;
+    border-radius: root.tab ? 0px : 7px;
+    background: !root.enabled ? #eef0f3 : root.primary ? (touch.has-hover ? #224bc4 : #2855d9) : root.selected && !root.tab ? #e9efff : touch.has-hover ? #f0f3fa : root.quiet || root.tab ? transparent : white;
+    border-width: focus.has-focus ? 2px : root.quiet || root.tab || root.primary ? 0px : 1px;
+    border-color: focus.has-focus ? #7890df : #dfe2e7;
+    forward-focus: focus;
+    accessible-role: button;
+    accessible-label: root.text;
+    accessible-enabled: root.enabled;
+    accessible-action-default => { if root.enabled { root.clicked(); } }
+    caption := Text { vertical-alignment: center; text: root.text; color: !root.enabled ? #a2a7af : root.primary ? white : root.danger ? #df6268 : root.selected || (root.quiet && !root.filter) ? #2855d9 : #737985; font-size: 13px; font-weight: root.primary || root.selected ? 600 : 400; horizontal-alignment: center;  }
+    if root.tab && root.selected: Rectangle { y: parent.height - 2px; height: 2px; background: #2855d9; }
+    touch := TouchArea { enabled: root.enabled; mouse-cursor: pointer; clicked => { focus.focus(); root.clicked(); } }
+    focus := FocusScope { width: 0px; enabled: root.enabled; key-pressed(e) => { if e.text == Key.Return || e.text == Key.Space { root.clicked(); return accept; } return reject; } }
+}
+component Field inherits Rectangle {
+    in-out property <string> text;
+    in property <string> placeholder-text;
+    callback edited(); callback accepted();
+    preferred-height: 40px; min-height: 36px; vertical-stretch: 0;
+    background: white; border-radius: 6px; border-width: 1px;
+    border-color: input.has-focus ? #7890df : #dfe3e8;
+    forward-focus: input;
+    if root.text == "": Text { vertical-alignment: center; x: 11px; width: parent.width - 22px; text: root.placeholder-text; color: #9aa0aa; font-size: 13px;  }
+    input := TextInput { x: 11px; width: parent.width - 22px; text <=> root.text; single-line: true; vertical-alignment: center; color: #303640; font-size: 13px;  selection-background-color: #dce7ff; selection-foreground-color: #20252d; edited => { root.edited(); } accepted => { root.accepted(); } }
+}
+component Dot inherits Rectangle {
+    in property <string> state;
+    width: 22px; height: 22px; border-radius: 11px;
+    background: state == "已完成" ? #eaf7ef : state == "已失败" ? #fff0f0 : white;
+    border-width: state == "待进行" ? 1px : 0px; border-color: #c8cdd5;
+    if root.state == "已完成": Path { width: 22px; height: 22px; viewbox-width: 22; viewbox-height: 22; commands: "M 6 11 L 10 15 L 16 7"; stroke: #2b9a5b; stroke-width: 1.8px; }
+    if root.state == "已失败": Path { width: 22px; height: 22px; viewbox-width: 22; viewbox-height: 22; commands: "M 7 7 L 15 15 M 15 7 L 7 15"; stroke: #e85d62; stroke-width: 1.5px; }
+
+}
+export struct StageRow { id: string, title: string, date: string, state: string }
+export struct ApplicationRow { id: string, company: string, position: string, chain: string, state: string, current: string, latest: string, nodes: [StageRow] }
+export struct DayCell { date: string, label: string, count: int, outside: bool, today: bool, previews: [StageRow] }
+export struct AgendaRow { app-id: string, title: string, detail: string }
+export struct StatRow { title: string, count: int, ratio: float }
+export component AppWindow inherits Window {
+    title: "秋招看板"; preferred-width: 1280px; preferred-height: 820px;
+    min-width: 880px; min-height: 680px; background: #f7f8fa;
+    default-font-size: 13px;
+    in property <[int]> counts;
+    in property <[ApplicationRow]> applications;
+    in property <[StageRow]> stages;
+    in property <string> summary;
+    in-out property <int> page;
+    in-out property <string> calendar-query;
+    in-out property <bool> pending-only;
+    in-out property <string> month;
+    in property <string> selected-date;
+    in property <[DayCell]> days;
+    in property <[AgendaRow]> agenda;
+    in property <[StatRow]> stats;
+    in property <[StatRow]> visible-stats;
+    in property <string> calendar-summary;
+    callback month-move(int);
+    callback month-select();
+    callback calendar-today();
+    callback select-date(string);
+    in property <string> data-location;
+    in property <string> notice;
+    in-out property <string> query;
+    in-out property <int> filter-index;
+    in-out property <string> selected-id;
+    in property <string> selected-title;
+    in property <string> selected-company;
+    in property <string> selected-position;
+    in property <string> selected-notes;
+    in-out property <int> form-mode; // 0 closed, 1 application, 2 stage
+    in property <string> form-heading;
+    in property <bool> editing-application;
+    in-out property <string> company;
+    in-out property <string> position;
+    in-out property <string> url;
+    in-out property <string> notes;
+    in-out property <string> date;
+    in-out property <string> stage-title;
+    in-out property <int> stage-type;
+    in-out property <int> stage-status;
+    in-out property <bool> confirm-visible;
+    in property <string> confirm-text;
+    callback filter-changed();
+    callback open-application(string);
+    callback new-application();
+    callback edit-application();
+    callback new-stage();
+    callback edit-stage(string);
+    callback delete-stage(string);
+    callback delete-application();
+    callback confirm-delete();
+    callback save-form();
+    callback cancel-form();
+    callback open-link();
+    callback open-folder();
+    callback quit();
+    callback clear-notice();
+
+
+    VerticalLayout {
+        spacing: 0px;
+        Rectangle {
+            height: 86px; background: white;
+            Rectangle { y: parent.height - 1px; height: 1px; background: #e7e9ed; }
+            HorizontalLayout {
+                padding-left: 34px; padding-right: 34px; spacing: 10px;
+                VerticalLayout { width: 36px; alignment: center; Rectangle { width: 36px; height: 36px; border-radius: 10px; background: #2855d9; Text { vertical-alignment: center; text: "秋"; color: white; font-size: 19px; font-weight: 700; horizontal-alignment: center;  } } }
+                VerticalLayout { alignment: center; spacing: 3px;
+                    Text { vertical-alignment: center; text: "秋招看板"; color: #20252d; font-size: 18px; font-weight: 600; }
+                    Text { vertical-alignment: center; text: "Track every application, one stage at a time."; color: #9ca3af; font-size: 10px; }
+                }
+                for title[index] in ["招聘进度", "全部记录", "日历", "数据统计"]: Action { text: title; tab: true; height: 86px; selected: root.page == index; clicked => { root.page = index; } }
+                Rectangle { horizontal-stretch: 1; }
+                VerticalLayout { alignment: center; Action { text: "数据目录"; height: 36px; clicked => { root.open-folder(); } } }
+                VerticalLayout { alignment: center; Action { text: "退出"; height: 36px; quiet: true; clicked => { root.quit(); } } }
+            }
+        }
+        VerticalLayout {
+            padding-left: 34px; padding-right: 34px; padding-top: 28px; padding-bottom: 24px; spacing: 20px;
+            if root.page < 2: HorizontalLayout {
+                spacing: 10px;
+                Field { max-width: 260px; min-width: 150px; placeholder-text: "⌕  搜索公司 / 岗位"; text <=> root.query; edited => { root.filter-changed(); } }
+                for label[index] in ["全部", "进行中", "有未完成进展", "Offer", "已结束"]: Action { text: label + "  " + root.counts[index]; quiet: true; filter: true; selected: root.filter-index == index; clicked => { root.filter-index = index; root.filter-changed(); } }
+                Rectangle { horizontal-stretch: 1; }
+                Action { text: "＋ 新增投递"; primary: true; clicked => { root.new-application(); } }
+            }
+            if root.page == 0: HorizontalLayout {
+                spacing: 12px;
+                for label[index] in ["总投递", "进行中", "Offer", "已结束"]: Rectangle {
+                    height: 62px; border-radius: 8px; border-width: 1px; border-color: #e7e9ed; background: white;
+                    HorizontalLayout { padding-left: 18px; padding-right: 18px;
+                        Text { vertical-alignment: center; text: label; color: #7d838d; }
+                        Text { vertical-alignment: center; text: root.counts[index == 0 ? 0 : index == 1 ? 1 : index + 1]; font-size: 23px; font-weight: 600; color: #20252d; horizontal-alignment: right; }
+                    }
+                }
+            }
+            if root.page == 0 && root.applications.length == 0: Rectangle { height: 220px; VerticalLayout { alignment: center; spacing: 10px; Text { vertical-alignment: center; text: "⌁"; font-size: 32px; color: #c2c8d1; horizontal-alignment: center; } Text { vertical-alignment: center; text: "还没有匹配的投递记录"; color: #555c68; font-size: 15px; horizontal-alignment: center; } Text { vertical-alignment: center; text: "试试调整搜索条件，或新增一条岗位投递。"; color: #9299a5; horizontal-alignment: center; } } }
+            if root.page == 0 && root.applications.length > 0: ListView {
+                for application in root.applications: Rectangle {
+                    height: 80px;
+                    Rectangle {
+                        height: 68px; background: white; border-radius: 9px; border-width: 1px; border-color: #e7e9ed;
+                        HorizontalLayout {
+                            padding-left: 20px; padding-right: 16px; spacing: 20px;
+                            Rectangle { width: 230px;
+                                HorizontalLayout { spacing: 8px;
+                                    Text { vertical-alignment: center; text: application.company; max-width: 115px; color: #20252d; font-weight: 600; overflow: elide; }
+                                    Text { vertical-alignment: center; text: "/"; color: #b2b7bf; horizontal-stretch: 0; }
+                                    Text { vertical-alignment: center; text: application.position; color: #515862; overflow: elide; }
+                                }
+                                TouchArea { mouse-cursor: pointer; clicked => { root.open-application(application.id); } }
+                            }
+                            Rectangle {
+                                ScrollView { y: (parent.height - 42px)/2; height: 42px;
+                                    HorizontalLayout { spacing: 0px; alignment: start;
+                                        for node[index] in application.nodes: Rectangle {
+                                            width: node-label.preferred-width + 70px; height: 42px;
+                                            Dot { x: 0px; y: 10px; state: node.state; }
+                                            node-label := Text { x: 29px; height: 42px; text: node.title; vertical-alignment: center; color: node.state == "待进行" ? #9aa1ab : #515862; }
+                                            if index < application.nodes.length - 1: Rectangle { x: parent.width - 32px; y: 21px; width: 28px; height: 1px; background: #d9dde4; }
+                                            TouchArea { mouse-cursor: pointer; clicked => { root.open-application(application.id); } }
+                                        }
+                                    }
+                                }
+                            }
+                            Text { vertical-alignment: center; text: application.latest; color: #9da3ac; font-size: 12px; horizontal-stretch: 0; }
+                            Action { text: "＋ 进展"; quiet: true; clicked => { root.open-application(application.id); root.new-stage(); } }
+                        }
+                    }
+                }
+
+            }
+            if root.page == 1: Rectangle {
+                background: white; border-width: 1px; border-color: #e7e9ed; border-radius: 9px;
+                VerticalLayout { spacing: 0px;
+                    Rectangle { height: 48px; background: #fbfbfc;
+                        HorizontalLayout { padding-left: 18px; padding-right: 18px; spacing: 16px;
+                            for title in ["公司", "岗位", "当前进展", "最近更新", "结果"]: Text { min-width: 0px; preferred-width: 0px; horizontal-stretch: 1; vertical-alignment: center; text: title; color: #8e949d; font-size: 12px; }
+                        }
+                    }
+                    ListView {
+                        for application in root.applications: Rectangle { height: 53px;
+                            Rectangle { y: 0px; height: 1px; background: #edf0f3; }
+                            HorizontalLayout { padding-left: 18px; padding-right: 18px; spacing: 16px;
+                                Text { min-width: 0px; preferred-width: 0px; horizontal-stretch: 1; vertical-alignment: center; text: application.company; overflow: elide; color: #20252d; }
+                                Text { min-width: 0px; preferred-width: 0px; horizontal-stretch: 1; vertical-alignment: center; text: application.position; overflow: elide; color: #20252d; }
+                                Text { min-width: 0px; preferred-width: 0px; horizontal-stretch: 1; vertical-alignment: center; text: application.current; overflow: elide; color: #515862; }
+                                Text { min-width: 0px; preferred-width: 0px; horizontal-stretch: 1; vertical-alignment: center; text: application.latest; color: #737985; }
+                                Text { min-width: 0px; preferred-width: 0px; horizontal-stretch: 1; vertical-alignment: center; text: application.state; color: application.state == "Offer" ? #26975a : application.state == "已结束" ? #dc6267 : #4169cb; }
+                            }
+                            TouchArea { mouse-cursor: pointer; clicked => { root.open-application(application.id); } }
+                        }
+                    }
+                }
+            }
+            if root.page == 2: VerticalLayout {
+                spacing: 14px;
+                HorizontalLayout { height: 40px; spacing: 8px;
+                    Action { text: "‹"; clicked => { root.month-move(-1); } }
+                    Field { width: 125px; text <=> root.month; accepted => { root.month-select(); } }
+                    Action { text: "跳转"; quiet: true; clicked => { root.month-select(); } }
+                    Action { text: "›"; clicked => { root.month-move(1); } }
+                    Action { text: "今天"; clicked => { root.calendar-today(); } }
+                    Rectangle { horizontal-stretch: 1; }
+                    Field { width: 220px; placeholder-text: "搜索公司 / 岗位"; text <=> root.calendar-query; edited => { root.filter-changed(); } }
+                    CheckBox { text: "仅看未完成进展"; checked <=> root.pending-only; toggled => { root.filter-changed(); } }
+                }
+                HorizontalLayout { height: 24px; Text { vertical-alignment: center; text: root.calendar-summary; color: #737985; font-size: 12px; } Text { vertical-alignment: center; text: "○ 待进行     ✓ 已完成     × 已失败"; horizontal-alignment: right; color: #7d8697; font-size: 12px; } }
+                HorizontalLayout { spacing: 20px;
+                    Rectangle { background: white; border-radius: 10px; border-width: 1px; border-color: #e0e5ee;
+                        VerticalLayout { spacing: 0px; padding: 1px;
+                            Rectangle { height: 38px; background: #f8faff; HorizontalLayout { for day in ["一", "二", "三", "四", "五", "六", "日"]: Text { vertical-alignment: center; text: "周" + day; horizontal-alignment: center; color: #7d8697; font-size: 12px; } } }
+                            for week in 6: HorizontalLayout { spacing: 0px;
+                                for weekday in 7: Rectangle {
+                                    min-width: 55px; min-height: 65px;
+                                    background: root.days[week * 7 + weekday].date == root.selected-date ? #e8efff : root.days[week * 7 + weekday].count > 0 ? #f0f5ff : root.days[week * 7 + weekday].outside ? #fafbfc : white;
+                                    border-width: root.days[week * 7 + weekday].date == root.selected-date ? 2px : 1px;
+                                    border-color: root.days[week * 7 + weekday].date == root.selected-date ? #2855d9 : #edf0f5;
+                                    VerticalLayout { padding: 6px; spacing: 4px; alignment: start;
+                                        HorizontalLayout { Text { vertical-alignment: center; text: root.days[week * 7 + weekday].label; color: root.days[week * 7 + weekday].today ? #2855d9 : root.days[week * 7 + weekday].outside ? #b2b7bf : #303640; font-size: 12px; } Text { vertical-alignment: center; text: root.days[week * 7 + weekday].count > 0 ? root.days[week * 7 + weekday].count : ""; color: #2855d9; font-size: 10px; horizontal-alignment: right; } }
+                                        for preview in root.days[week * 7 + weekday].previews: Rectangle { height: 20px; border-radius: 4px; background: preview.state == "待进行" ? #fff0cf : preview.state == "已完成" ? #e2f3e9 : #ffe7e8;
+                                            Text { vertical-alignment: center; x: 4px; width: parent.width - 8px; text: preview.title; overflow: elide; font-size: 10px; color: preview.state == "待进行" ? #925604 : preview.state == "已完成" ? #287c4b : #bb4950;  }
+                                        }
+                                    }
+                                    TouchArea { mouse-cursor: pointer; clicked => { root.select-date(root.days[week * 7 + weekday].date); } }
+                                }
+                            }
+                        }
+                    }
+                    Rectangle { width: 270px; background: white; border-width: 1px; border-color: #e0e5ee; border-radius: 10px;
+                        VerticalLayout { padding: 20px; spacing: 12px;
+                            Text { vertical-alignment: center; text: root.selected-date; color: #20252d; font-size: 17px; font-weight: 600; }
+                            Text { vertical-alignment: center; text: root.agenda.length + " 项进展 · 点击查看投递详情"; color: #9299a5; font-size: 11px; }
+                            if root.agenda.length == 0: Text { vertical-alignment: center; text: "当天没有符合条件的进展"; color: #9299a5; font-size: 12px; }
+                            ListView { for entry in root.agenda: Rectangle { height: 126px;
+                                VerticalLayout { padding-top: 12px; spacing: 6px; alignment: start;
+                                    Rectangle { height: 1px; background: #edf0f5; }
+                                    Text { vertical-alignment: center; text: entry.title; wrap: word-wrap; font-weight: 600; color: #303640; }
+                                    Text { vertical-alignment: center; text: entry.detail; wrap: word-wrap; overflow: elide; color: #7d8695; font-size: 12px; }
+                                    Action { text: "查看投递 →"; quiet: true; clicked => { root.open-application(entry.app-id); } }
+                                }
+                            } }
+                        }
+                    }
+                }
+            }
+            if root.page == 3: VerticalLayout { spacing: 18px;
+                Rectangle { height: 166px; background: #202b42; border-radius: 10px;
+                    VerticalLayout { padding: 32px; spacing: 12px; alignment: start;
+                        Text { vertical-alignment: center; text: "数据统计"; color: #aab7d7; font-size: 12px; }
+                        Text { vertical-alignment: center; text: "每一次投递，都是一条独立的进度链。"; color: white; font-size: 23px; }
+                        Text { vertical-alignment: center; text: "当前共记录 " + root.counts[0] + " 次岗位投递"; color: #b5bfd4; font-size: 13px; }
+                    }
+                }
+                Rectangle { background: white; border-width: 1px; border-color: #e7e9ed; border-radius: 9px;
+                    VerticalLayout { padding: 24px; spacing: 10px;
+                        ListView { for stat in root.visible-stats: Rectangle { height: 42px;
+                            HorizontalLayout { spacing: 15px;
+                                Text { vertical-alignment: center; width: 80px; text: stat.title; color: #515862; }
+                                Rectangle { Rectangle { y: (parent.height - 9px)/2; height: 9px; background: #f0f2f5; border-radius: 5px; Rectangle { x: 0px; width: parent.width * stat.ratio; height: parent.height; background: #7690e8; border-radius: 5px; } } }
+                                Text { vertical-alignment: center; width: 40px; text: stat.count; horizontal-alignment: right; color: #303640; }
+                            }
+                        } }
+                        Text { vertical-alignment: center; text: "按岗位投递去重统计，同一岗位多轮面试仅计一次。"; color: #9299a5; font-size: 11px; }
+                    }
+                }
+            }
+        }
+    }
+    if root.selected-id != "": Rectangle {
+        background: #15213a40;
+        TouchArea { clicked => { root.selected-id = ""; } }
+        Rectangle { x: parent.width - self.width; width: 500px; background: white;
+            VerticalLayout { padding: 30px; spacing: 16px;
+                HorizontalLayout { Text { vertical-alignment: center; text: "岗位投递"; color: #a0a6b0; font-size: 11px; } Action { text: "×"; quiet: true; clicked => { root.selected-id = ""; } } }
+                Text { vertical-alignment: center; text: root.selected-company; color: #20252d; font-size: 22px; font-weight: 600; wrap: word-wrap; }
+                Text { text: root.selected-position; color: #626a75; font-size: 14px; }
+                HorizontalLayout { alignment: start; Action { text: "打开投递链接 ↗"; quiet: true; clicked => { root.open-link(); } } Action { text: "编辑投递"; quiet: true; clicked => { root.edit-application(); } } }
+                Rectangle { height: 1px; background: #edf0f3; }
+                HorizontalLayout { Text { vertical-alignment: center; text: "招聘流程"; color: #20252d; font-size: 14px; font-weight: 600; } Action { text: "＋ 添加进展"; quiet: true; clicked => { root.new-stage(); } } }
+                ListView { for stage in root.stages: Rectangle { height: 100px;
+                    HorizontalLayout { spacing: 13px;
+                        VerticalLayout { width: 22px; alignment: start; Dot { state: stage.state; } Rectangle { width: 22px; height: 75px; Rectangle { x: 10px; width: 1px; background: #e0e4e9; } } }
+                        VerticalLayout { spacing: 7px; alignment: start;
+                            HorizontalLayout { Text { vertical-alignment: center; text: stage.title; font-weight: 600; color: #303640; } Text { vertical-alignment: center; text: stage.date; color: #9da3ac; font-size: 11px; horizontal-alignment: right; } }
+                            Text { vertical-alignment: center; text: stage.state; color: #9299a3; font-size: 11px; }
+                            HorizontalLayout { alignment: end; Action { text: "编辑"; quiet: true; clicked => { root.edit-stage(stage.id); } } Action { text: "删除"; quiet: true; danger: true; clicked => { root.delete-stage(stage.id); } } }
+                        }
+                    }
+                } }
+                Text { vertical-alignment: center; text: root.selected-notes; max-height: 80px; wrap: word-wrap; overflow: elide; color: #69717d; }
+                Action { text: "删除这条投递记录"; quiet: true; danger: true; clicked => { root.delete-application(); } }
+            }
+        }
+    }
+    if root.form-mode != 0: Rectangle {
+        background: #15213a40; TouchArea {}
+        Rectangle { x: (parent.width - self.width)/2; y: (parent.height - self.height)/2; width: 460px; height: min(560px, parent.height - 40px); background: white; border-radius: 11px;
+            VerticalLayout { padding: 23px; spacing: 8px;
+                HorizontalLayout { Text { vertical-alignment: center; text: root.form-heading; font-size: 18px; font-weight: 600; color: #20252d; } Action { text: "×"; quiet: true; clicked => { root.cancel-form(); } } }
+                if root.form-mode == 1: Text { vertical-alignment: center; text: "公司 *"; color: #656d78; font-size: 12px; }
+                if root.form-mode == 1: Field { text <=> root.company; placeholder-text: "公司名称"; }
+                if root.form-mode == 1: Text { vertical-alignment: center; text: "岗位 *"; color: #656d78; font-size: 12px; }
+                if root.form-mode == 1: Field { text <=> root.position; placeholder-text: "岗位名称"; }
+                if root.form-mode == 1: Text { vertical-alignment: center; text: "投递链接"; color: #656d78; font-size: 12px; }
+                if root.form-mode == 1: Field { text <=> root.url; placeholder-text: "https://"; }
+                if root.form-mode == 2: Text { vertical-alignment: center; text: "类型"; color: #656d78; font-size: 12px; }
+                if root.form-mode == 2: ComboBox { model: ["投递", "测评", "笔试", "面试", "HR面", "OC", "Offer", "已挂", "其他"]; current-index <=> root.stage-type; }
+                if root.form-mode == 2: Text { vertical-alignment: center; text: "名称 *"; color: #656d78; font-size: 12px; }
+                if root.form-mode == 2: Field { text <=> root.stage-title; }
+                if root.form-mode == 2: Text { vertical-alignment: center; text: "状态"; color: #656d78; font-size: 12px; }
+                if root.form-mode == 2: ComboBox { model: ["已完成", "待进行", "已失败"]; current-index <=> root.stage-status; }
+                Text { vertical-alignment: center; text: root.editing-application ? "投递日期请在投递节点中修改" : "日期（YYYY-MM-DD）"; color: #656d78; font-size: 12px; }
+                if !root.editing-application: Field { text <=> root.date; placeholder-text: "YYYY-MM-DD，可留空"; }
+                Text { vertical-alignment: center; text: "备注"; color: #656d78; font-size: 12px; }
+                TextEdit { text <=> root.notes; min-height: 60px; }
+                if root.notice != "": Text { vertical-alignment: center; text: root.notice; color: #b2452b; wrap: word-wrap; font-size: 12px; }
+                Rectangle { height: 1px; background: #eef0f3; }
+                HorizontalLayout { alignment: end; spacing: 9px; Action { text: "取消"; quiet: true; clicked => { root.cancel-form(); } } Action { text: "保存"; primary: true; clicked => { root.save-form(); } } }
+            }
+        }
+    }
+    if root.confirm-visible: Rectangle { background: #15213a40; TouchArea {}
+        Rectangle { x: (parent.width - self.width)/2; y: (parent.height - self.height)/2; width: 440px; height: 200px; background: white; border-radius: 11px;
+            VerticalLayout { padding: 24px; spacing: 18px; Text { vertical-alignment: center; text: "确认删除"; color: #20252d; font-size: 18px; font-weight: 600; } Text { vertical-alignment: center; text: root.confirm-text; color: #656d78; wrap: word-wrap; } HorizontalLayout { alignment: end; spacing: 9px; Action { text: "取消"; quiet: true; clicked => { root.confirm-visible = false; } } Action { text: "删除"; danger: true; clicked => { root.confirm-delete(); } } } }
+        }
+    }
+    if root.notice != "" && root.form-mode == 0: Rectangle { x: (parent.width - self.width)/2; y: parent.height - self.height - 27px; width: min(parent.width - 48px, 560px); height: 44px; background: #202b42; border-radius: 7px; Text { vertical-alignment: center; text: root.notice; color: white; font-size: 12px; horizontal-alignment: center;  overflow: elide; } TouchArea { clicked => { root.clear-notice(); } } }
+}
+
+export component StartupErrorWindow inherits Window {
+    title: "秋招看板 · 无法启动";
+    preferred-width: 520px; preferred-height: 280px;
+    background: #f7f8fa;
+    in property <string> message;
+    callback quit();
+    VerticalLayout {
+        padding: 24px; spacing: 16px;
+        Text { text: "暂时无法打开秋招看板"; font-size: 18px; font-weight: 600; color: #20252d; }
+        Text { text: root.message; wrap: word-wrap; color: #656d78; font-size: 13px; }
+        HorizontalLayout { alignment: end; Action { text: "知道了"; primary: true; clicked => { root.quit(); } } }
+    }
+}
+
+export component AppTray inherits SystemTrayIcon {
+    tooltip: "秋招看板 · 原生预览版";
+    in property <image> tray-image;
+    icon: root.tray-image;
+    callback restore();
+    callback quit();
+    clicked => { root.restore(); }
+    Menu {
+        MenuItem { title: "打开秋招看板"; activated => { root.restore(); } }
+        MenuItem { title: "退出"; activated => { root.quit(); } }
+    }
+}

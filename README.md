@@ -1,5 +1,19 @@
 # 秋招看板桌面版
 
+## 当前版本：v2.0.0 原生便携版
+
+当前主版本采用 Rust + Slint。到 GitHub Releases 下载 Windows x64 ZIP，解压到可写目录，双击 `autumn-native.exe` 使用，无需安装 Node.js 或浏览器运行时。
+
+支持投递和进展管理、搜索、状态与未完成筛选、全部记录、日历、统计、托盘。数据默认保存在 EXE 旁的 `data/applications.json`；移动程序时一起移动 `data` 文件夹。升级前退出托盘中的程序，备份 `data`，再替换 EXE。发布包不包含个人数据。
+
+旧版数据不会自动导入：退出旧版并备份其数据后，可运行 `autumn-native.exe --import-legacy "旧版 applications.json 的完整路径"`，仅允许导入到尚无数据的新目录。也可用 `--data-dir` 指定数据目录。具体开发与数据说明见 [native/README.md](native/README.md)。
+
+本次仅提供 Windows x64 产物；macOS/Linux 尚未完成实机验证。当前不提供 Excel 导入、开机启动和重复启动恢复窗口；数据目录被其他实例占用时会提示退出已有实例。
+
+旧版 v1.0.3 Release 和下方 Electron 源码使用说明继续保留。
+
+## 旧版 v1.0.3（Electron）
+
 Windows 桌面程序，保留招聘进度、全部记录、统计、Excel 导入等功能。
 
 ## 安装和使用
