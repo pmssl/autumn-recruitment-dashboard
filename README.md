@@ -1,6 +1,6 @@
 # 秋招看板桌面版
 
-## 当前版本：v2.0.0 原生便携版
+## 当前版本：v2.0.1 原生便携版
 
 当前主版本采用 Rust + Slint。到 GitHub Releases 下载 Windows x64 ZIP，解压到可写目录，双击 `autumn-native.exe` 使用，无需安装 Node.js 或浏览器运行时。
 
