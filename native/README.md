@@ -1,6 +1,8 @@
 # 原生预览版
 
-Rust + Slint 原生版 v2.0.1 是当前主版本。旧 Electron 源码与 v1.0.3 Release 保留；下文预览记录用于追溯开发过程。当前发布 Windows x64 便携包，尚未完成的功能和平台验证见“当前范围”。
+Rust + Slint 原生版 v2.0.2 是当前主版本。旧 Electron 源码与 v1.0.3 Release 保留；下文预览记录用于追溯开发过程。当前发布 Windows x64 便携包，尚未完成的功能和平台验证见“当前范围”。
+
+v2.0.2 将 Slint 固定到包含 Windows 重绘修复的上游提交；用户实测首次打开和托盘恢复不再出现空白。该提交属于 1.19.0 开发版，跨显示器移动尚未实测，详见 `docs/SLINT_REPAINT_TRIAL.md`。
 
 本机已构建 Windows 预览程序 `native/release/autumn-native.exe`，可直接启动。Windows Release 使用图形子系统启动，不附带控制台窗口；开发用 Debug 构建保留控制台输出。2026-10-27 测得 9.69 MB（9.24 MiB），不含系统库；这不是安装包，也不是最终功能体积。
 

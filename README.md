@@ -1,8 +1,10 @@
 # 秋招看板桌面版
 
-## 当前版本：v2.0.1 原生便携版
+## 当前版本：v2.0.2 原生便携版
 
 当前主版本采用 Rust + Slint。到 GitHub Releases 下载 Windows x64 ZIP，解压到可写目录，双击 `autumn-native.exe` 使用，无需安装 Node.js 或浏览器运行时。
+
+v2.0.2 更新 Slint，修复 Windows 上窗口首次打开及从托盘恢复后可能出现的空白或透明区域。当前固定到包含修复的上游开发提交，详见 [窗口重绘试验](docs/SLINT_REPAINT_TRIAL.md)。
 
 支持投递和进展管理、搜索、状态与未完成筛选、全部记录、日历、统计、托盘。数据默认保存在 EXE 旁的 `data/applications.json`；移动程序时一起移动 `data` 文件夹。升级前退出托盘中的程序，备份 `data`，再替换 EXE。发布包不包含个人数据。
 
