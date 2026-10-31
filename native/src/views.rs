@@ -108,6 +108,25 @@ pub fn current_stage(app: &Application) -> &str {
         .unwrap_or("—")
 }
 
+pub fn pending_stage_titles(app: &Application) -> String {
+    let mut stages = app
+        .stages
+        .iter()
+        .filter(|stage| stage.status == StageStatus::Pending)
+        .collect::<Vec<_>>();
+    stages.sort_by(|a, b| a.sort_order.total_cmp(&b.sort_order));
+    let titles = stages
+        .iter()
+        .map(|stage| stage.title.as_str())
+        .collect::<Vec<_>>()
+        .join("、");
+    if titles.is_empty() {
+        "—".to_owned()
+    } else {
+        titles
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -139,6 +158,27 @@ mod tests {
         let c = calendar(&apps, "", true);
         assert_eq!(c.undated, 1);
         assert!(c.days.is_empty());
+    }
+    #[test]
+    fn pending_titles_follow_flow_order_and_exclude_completed() {
+        let mut app = fixture().remove(0);
+        assert_eq!(current_stage(&app), "投递");
+        assert_eq!(pending_stage_titles(&app), "一面");
+        let mut later = app.stages[1].clone();
+        later.id = "stage-later".into();
+        later.title = "三面".into();
+        later.sort_order = 30.0;
+        let mut earlier = later.clone();
+        earlier.id = "stage-earlier".into();
+        earlier.title = "二面".into();
+        earlier.sort_order = 15.0;
+        app.stages.push(later);
+        app.stages.push(earlier);
+        assert_eq!(pending_stage_titles(&app), "二面、一面、三面");
+        for stage in &mut app.stages {
+            stage.status = StageStatus::Completed;
+        }
+        assert_eq!(pending_stage_titles(&app), "—");
     }
     #[test]
     fn stats_deduplicate_stages_per_application() {

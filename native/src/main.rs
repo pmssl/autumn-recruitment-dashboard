@@ -69,6 +69,7 @@ struct State {
 }
 
 fn refresh(ui: &AppWindow, state: &State) {
+    let pending_filter = ui.get_filter_index() == 2;
     let mut visible: Vec<_> = state
         .apps
         .iter()
@@ -97,7 +98,12 @@ fn refresh(ui: &AppWindow, state: &State) {
             company: a.company.as_str().into(),
             position: a.position.as_str().into(),
             chain: a.chain().into(),
-            current: views::current_stage(a).into(),
+            current: if pending_filter {
+                views::pending_stage_titles(a)
+            } else {
+                views::current_stage(a).to_owned()
+            }
+            .into(),
             latest: views::latest_date(a)
                 .chars()
                 .take(10)
@@ -820,6 +826,10 @@ fn run() -> Result<()> {
         ui.invoke_filter_changed();
         use slint::Model;
         assert_eq!(ui.get_applications().row_count(), 1);
+        assert_eq!(
+            ui.get_applications().row_data(0).unwrap().current.as_str(),
+            "二面"
+        );
         ui.set_page(2);
         ui.set_month("2028-02".into());
         ui.invoke_month_select();
