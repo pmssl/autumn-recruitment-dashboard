@@ -272,7 +272,7 @@ export component AppWindow inherits Window {
                 Rectangle { background: white; border-width: 1px; border-color: #e7e9ed; border-radius: 9px;
                     VerticalLayout { padding: 24px; spacing: 10px;
                         ListView { for stat in root.visible-stats: Rectangle { height: 42px;
-                            HorizontalLayout { spacing: 15px;
+                            HorizontalLayout { spacing: 15px; padding-right: 24px;
                                 Text { vertical-alignment: center; width: 80px; text: stat.title; color: #515862; }
                                 Rectangle { Rectangle { y: (parent.height - 9px)/2; height: 9px; background: #f0f2f5; border-radius: 5px; Rectangle { x: 0px; width: parent.width * stat.ratio; height: parent.height; background: #7690e8; border-radius: 5px; } } }
                                 Text { vertical-alignment: center; width: 40px; text: stat.count; horizontal-alignment: right; color: #303640; }

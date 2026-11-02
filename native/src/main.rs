@@ -718,7 +718,7 @@ fn run() -> Result<()> {
         state.borrow_mut().selected_date = "2026-10-15".into();
         refresh(&ui, &state.borrow());
         ui.show()?;
-        for step in 0..9 {
+        for step in 0..10 {
             let weak = ui.as_weak();
             let output = output.clone();
             slint::Timer::single_shot(
@@ -729,7 +729,21 @@ fn run() -> Result<()> {
                     u.set_form_mode(0);
                     u.set_notice("".into());
                     match step {
-                        0..=3 => u.set_page(step as i32),
+                        0..=2 => u.set_page(step as i32),
+                        3 | 9 => {
+                            u.set_page(3);
+                            u.set_visible_stats(ModelRc::new(VecModel::from(
+                                views::STAGE_TYPES
+                                    .iter()
+                                    .enumerate()
+                                    .map(|(index, (_, title))| StatRow {
+                                        title: (*title).into(),
+                                        count: (index + 1) as i32,
+                                        ratio: (index + 1) as f32 / 9.0,
+                                    })
+                                    .collect::<Vec<_>>(),
+                            )));
+                        }
                         4 => {
                             u.set_page(0);
                             u.invoke_open_application("app-test".into());
@@ -748,9 +762,10 @@ fn run() -> Result<()> {
                             u.set_query("不存在的公司".into());
                             u.invoke_filter_changed();
                         }
-                        _ => {
+                        8 => {
                             u.window().set_size(slint::LogicalSize::new(900., 700.));
                         }
+                        _ => {}
                     }
                     let weak = u.as_weak();
                     slint::Timer::single_shot(std::time::Duration::from_millis(200), move || {
@@ -803,7 +818,7 @@ fn run() -> Result<()> {
                                 );
                             }
                         }
-                        if step == 8 {
+                        if step == 9 {
                             let _ = slint::quit_event_loop();
                         }
                     });
