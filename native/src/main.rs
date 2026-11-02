@@ -718,7 +718,7 @@ fn run() -> Result<()> {
         state.borrow_mut().selected_date = "2026-10-15".into();
         refresh(&ui, &state.borrow());
         ui.show()?;
-        for step in 0..7 {
+        for step in 0..9 {
             let weak = ui.as_weak();
             let output = output.clone();
             slint::Timer::single_shot(
@@ -738,9 +738,18 @@ fn run() -> Result<()> {
                             u.invoke_open_application("app-test".into());
                             u.invoke_edit_stage("stage-2".into());
                         }
-                        _ => {
+                        6 => {
                             u.window().set_size(slint::LogicalSize::new(900., 700.));
                             u.set_page(0);
+                        }
+                        7 => {
+                            u.window().set_size(slint::LogicalSize::new(1280., 820.));
+                            u.set_page(0);
+                            u.set_query("不存在的公司".into());
+                            u.invoke_filter_changed();
+                        }
+                        _ => {
+                            u.window().set_size(slint::LogicalSize::new(900., 700.));
                         }
                     }
                     let weak = u.as_weak();
@@ -794,7 +803,7 @@ fn run() -> Result<()> {
                                 );
                             }
                         }
-                        if step == 6 {
+                        if step == 8 {
                             let _ = slint::quit_event_loop();
                         }
                     });

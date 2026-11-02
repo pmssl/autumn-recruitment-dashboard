@@ -134,6 +134,7 @@ export component AppWindow inherits Window {
         VerticalLayout {
             padding-left: 34px; padding-right: 34px; padding-top: 28px; padding-bottom: 24px; spacing: 20px;
             if root.page < 2: HorizontalLayout {
+                height: 40px; vertical-stretch: 0;
                 spacing: 10px;
                 Field { max-width: 260px; min-width: 150px; placeholder-text: "⌕  搜索公司 / 岗位"; text <=> root.query; edited => { root.filter-changed(); } }
                 for label[index] in ["全部", "进行中", "有未完成进展", "Offer", "已结束"]: Action { text: label + "  " + root.counts[index]; quiet: true; filter: true; selected: root.filter-index == index; clicked => { root.filter-index = index; root.filter-changed(); } }

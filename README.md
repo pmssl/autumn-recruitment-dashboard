@@ -1,8 +1,10 @@
 # 秋招看板桌面版
 
-## 当前版本：v2.0.2 原生便携版
+## 当前版本：v2.0.3 原生便携版
 
 当前主版本采用 Rust + Slint。到 GitHub Releases 下载 Windows x64 ZIP，解压到可写目录，双击 `autumn-native.exe` 使用，无需安装 Node.js 或浏览器运行时。
+
+v2.0.3 修复招聘进度搜索无匹配结果时，搜索框和筛选按钮突然变高的问题。
 
 v2.0.2 更新 Slint，修复 Windows 上窗口首次打开及从托盘恢复后可能出现的空白或透明区域。当前固定到包含修复的上游开发提交，详见 [窗口重绘试验](docs/SLINT_REPAINT_TRIAL.md)。
 
