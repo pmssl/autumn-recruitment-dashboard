@@ -5,12 +5,14 @@
 
 use anyhow::{bail, Context, Result};
 use autumn_native::{
+    api,
     domain::{valid_date, Application, ApplicationState, Stage, StageStatus},
+    local_api, note_links,
     store::Store,
     views,
 };
 use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
-use std::{cell::RefCell, path::PathBuf, rc::Rc};
+use std::{cell::RefCell, io::Read, path::PathBuf, rc::Rc};
 
 slint::include_modules!();
 const TYPES: [&str; 9] = [
@@ -92,6 +94,8 @@ fn refresh(ui: &AppWindow, state: &State) {
                             title: s.title.as_str().into(),
                             date: s.date.as_deref().unwrap_or_default().into(),
                             state: stage_label(s.status).into(),
+                            notes: Default::default(),
+                            has_notes: false,
                         })
                         .collect::<Vec<_>>(),
                 ))
@@ -166,7 +170,14 @@ fn refresh(ui: &AppWindow, state: &State) {
         ui.set_selected_company(a.company.as_str().into());
         ui.set_selected_position(a.position.as_str().into());
         ui.set_selected_title(format!("{} / {}", a.company, a.position).into());
-        ui.set_selected_notes(a.notes.as_deref().unwrap_or_default().into());
+        ui.set_selected_notes(note_links::styled_notes(
+            a.notes.as_deref().unwrap_or_default(),
+        ));
+        ui.set_selected_has_notes(
+            a.notes
+                .as_deref()
+                .is_some_and(|notes| !notes.trim().is_empty()),
+        );
         let mut stages = a.stages.clone();
         stages.sort_by(|a, b| a.sort_order.total_cmp(&b.sort_order));
         ui.set_stages(ModelRc::new(VecModel::from(
@@ -182,6 +193,11 @@ fn refresh(ui: &AppWindow, state: &State) {
                         .unwrap_or("日期未填写")
                         .into(),
                     state: stage_label(s.status).into(),
+                    notes: note_links::styled_notes(s.notes.as_deref().unwrap_or_default()),
+                    has_notes: s
+                        .notes
+                        .as_deref()
+                        .is_some_and(|notes| !notes.trim().is_empty()),
                 })
                 .collect::<Vec<_>>(),
         )));
@@ -212,6 +228,8 @@ fn refresh_views(ui: &AppWindow, state: &State) {
                     title: format!("{} · {}", a.company, s.title).into(),
                     date: key.as_str().into(),
                     state: stage_label(s.status).into(),
+                    notes: Default::default(),
+                    has_notes: false,
                 })
                 .collect::<Vec<_>>();
             DayCell {
@@ -421,6 +439,9 @@ fn save_form(ui: &AppWindow, state: &mut State) -> Result<()> {
 fn main() -> Result<()> {
     if let Err(error) = run() {
         eprintln!("启动失败：{error:#}");
+        if std::env::args().any(|a| a == "--api") {
+            return Err(error);
+        }
         // GUI builds have no console: startup failures must remain visible.
         if let Ok(dialog) = StartupErrorWindow::new() {
             dialog.set_message(format!("{error:#}\n\n如果已有预览版在运行，请在旧窗口点击“退出”，或右键托盘图标退出后重试。关闭主窗口可能只会隐藏到托盘。").into());
@@ -438,6 +459,7 @@ fn run() -> Result<()> {
     let mut data_dir = None;
     let mut import = None;
     let mut smoke = false;
+    let mut api_request = false;
     #[cfg(debug_assertions)]
     let mut capture: Option<PathBuf> = None;
     let mut args = std::env::args().skip(1);
@@ -452,6 +474,7 @@ fn run() -> Result<()> {
                 ))
             }
             "--smoke-test" => smoke = true,
+            "--api" => api_request = true,
             #[cfg(debug_assertions)]
             "--capture-ui" => {
                 capture = Some(PathBuf::from(
@@ -461,7 +484,7 @@ fn run() -> Result<()> {
                 smoke = true;
             }
             "--help" => {
-                println!("autumn-native [--data-dir DIR] [--import-legacy JSON] [--smoke-test]\n预览版使用独立目录；不自动读取旧版数据。只在新版空目录导入旧 JSON 副本。");
+                println!("autumn-native [--data-dir DIR] [--import-legacy JSON] [--smoke-test] [--api]\n--api 从标准输入读取一条 JSON 请求，经本机接口交给运行中的程序处理，结果写到标准输出。");
                 return Ok(());
             }
             _ => bail!("未知参数：{arg}"),
@@ -484,6 +507,23 @@ fn run() -> Result<()> {
                 .join("data"),
         }
     };
+    if api_request {
+        if smoke || import.is_some() {
+            bail!("--api 不能与导入或测试模式同时使用");
+        }
+        let mut raw = Vec::new();
+        std::io::stdin()
+            .take(1024 * 1024 + 1)
+            .read_to_end(&mut raw)?;
+        if raw.len() > 1024 * 1024 {
+            bail!("API 请求超过 1 MiB");
+        }
+        let request: serde_json::Value =
+            serde_json::from_slice(&raw).context("标准输入不是有效 JSON")?;
+        let response = local_api::call(&directory, &request)?;
+        println!("{}", serde_json::to_string(&response)?);
+        return Ok(());
+    }
     let mut store = Store::open(&directory)?;
     if let Some(source) = import {
         if smoke {
@@ -637,6 +677,15 @@ fn run() -> Result<()> {
             u.set_notice("未填写有效的 http/https 投递链接".into());
         }
     });
+    bind!(on_open_note_link, |u, _s, url: SharedString| {
+        if url.starts_with("https://") || url.starts_with("http://") {
+            if let Err(e) = open::that(url.as_str()) {
+                u.set_notice(format!("无法打开备注链接：{e}").into());
+            }
+        } else {
+            u.set_notice("仅支持打开 http/https 备注链接".into());
+        }
+    });
     bind!(on_open_folder, |u, s| {
         if let Err(e) = open::that(s.store.path().parent().unwrap()) {
             u.set_notice(format!("无法打开目录：{e}").into());
@@ -704,6 +753,14 @@ fn run() -> Result<()> {
         fixture[0].company = "示例科技".into();
         fixture[0].position = "后端开发工程师".into();
         fixture[0].stages[1].date = Some("2026-10-15".into());
+        fixture[0].stages[1].notes =
+            Some("测评链接：https://example.com/test\n请按时完成。".into());
+        let mut after_note = fixture[0].stages[1].clone();
+        after_note.id = "preview-after-note".into();
+        after_note.title = "后续面试".into();
+        after_note.notes = None;
+        after_note.sort_order = 30.0;
+        fixture[0].stages.push(after_note);
         let mut second = fixture[0].clone();
         second.id = "preview-2".into();
         second.company = "示例网络".into();
@@ -947,7 +1004,38 @@ fn run() -> Result<()> {
         });
     }
     ui.show()?;
+    let (api_server, api_receiver) = local_api::start(&directory)?;
+    let api_timer = slint::Timer::default();
+    {
+        let weak = ui.as_weak();
+        let state = state.clone();
+        api_timer.start(
+            slint::TimerMode::Repeated,
+            std::time::Duration::from_millis(100),
+            move || {
+                while let Ok(incoming) = api_receiver.try_recv() {
+                    let Some(ui) = weak.upgrade() else {
+                        break;
+                    };
+                    let mut state = state.borrow_mut();
+                    let mut next = state.apps.clone();
+                    let result =
+                        api::execute(&incoming.request, &mut next).and_then(|(data, changed)| {
+                            if changed {
+                                state.store.save(&next)?;
+                                state.apps = next;
+                                refresh(&ui, &state);
+                            }
+                            Ok(data)
+                        });
+                    let _ = incoming.reply.send(api::response(result));
+                }
+            },
+        );
+    }
     slint::run_event_loop()?;
+    drop(api_timer);
+    drop(api_server);
     drop(tray);
     Ok(())
 }

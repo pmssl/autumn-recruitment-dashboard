@@ -48,7 +48,7 @@ component Dot inherits Rectangle {
     if root.state == "已推迟": Path { width: 22px; height: 22px; viewbox-width: 22; viewbox-height: 22; commands: "M 8 7 L 8 15 M 14 7 L 14 15"; stroke: #7658bd; stroke-width: 1.8px; }
 
 }
-export struct StageRow { id: string, title: string, date: string, state: string }
+export struct StageRow { id: string, title: string, date: string, state: string, notes: styled-text, has-notes: bool }
 export struct ApplicationRow { id: string, company: string, position: string, chain: string, state: string, current: string, latest: string, nodes: [StageRow] }
 export struct DayCell { date: string, label: string, count: int, outside: bool, today: bool, previews: [StageRow] }
 export struct AgendaRow { app-id: string, title: string, detail: string }
@@ -83,7 +83,8 @@ export component AppWindow inherits Window {
     in property <string> selected-title;
     in property <string> selected-company;
     in property <string> selected-position;
-    in property <string> selected-notes;
+    in property <styled-text> selected-notes;
+    in property <bool> selected-has-notes;
     in-out property <int> form-mode; // 0 closed, 1 application, 2 stage
     in property <string> form-heading;
     in property <bool> editing-application;
@@ -109,6 +110,7 @@ export component AppWindow inherits Window {
     callback save-form();
     callback cancel-form();
     callback open-link();
+    callback open-note-link(string);
     callback open-folder();
     callback quit();
     callback clear-notice();
@@ -296,17 +298,29 @@ export component AppWindow inherits Window {
                 HorizontalLayout { alignment: start; Action { text: "打开投递链接 ↗"; quiet: true; clicked => { root.open-link(); } } Action { text: "编辑投递"; quiet: true; clicked => { root.edit-application(); } } }
                 Rectangle { height: 1px; background: #edf0f3; }
                 HorizontalLayout { Text { vertical-alignment: center; text: "招聘流程"; color: #20252d; font-size: 14px; font-weight: 600; } Action { text: "＋ 添加进展"; quiet: true; clicked => { root.new-stage(); } } }
-                ListView { for stage in root.stages: Rectangle { height: 100px;
+                ListView { for stage in root.stages: Rectangle { height: stage.has-notes ? 230px : 100px;
                     HorizontalLayout { spacing: 13px;
-                        VerticalLayout { width: 22px; alignment: start; Dot { state: stage.state; } Rectangle { width: 22px; height: 75px; Rectangle { x: 10px; width: 1px; background: #e0e4e9; } } }
+                        Rectangle { width: 22px; height: parent.height;
+                            Rectangle { x: 10px; y: 22px; width: 1px; height: parent.height - 22px; background: #e0e4e9; }
+                            Dot { x: 0px; y: 0px; state: stage.state; }
+                        }
                         VerticalLayout { spacing: 7px; alignment: start;
                             HorizontalLayout { Text { vertical-alignment: center; text: stage.title; font-weight: 600; color: #303640; } Text { vertical-alignment: center; text: stage.date; color: #9da3ac; font-size: 11px; horizontal-alignment: right; } }
                             Text { vertical-alignment: center; text: stage.state; color: #9299a3; font-size: 11px; }
+                            if stage.has-notes: ScrollView { height: 120px;
+                                VerticalLayout { padding-right: 20px;
+                                    StyledText { text: stage.notes; link-color: #2855d9; default-color: #69717d; link-clicked(link) => { root.open-note-link(link); } }
+                                }
+                            }
                             HorizontalLayout { alignment: end; Action { text: "编辑"; quiet: true; clicked => { root.edit-stage(stage.id); } } Action { text: "删除"; quiet: true; danger: true; clicked => { root.delete-stage(stage.id); } } }
                         }
                     }
                 } }
-                Text { vertical-alignment: center; text: root.selected-notes; max-height: 80px; wrap: word-wrap; overflow: elide; color: #69717d; }
+                if root.selected-has-notes: ScrollView { height: 90px;
+                    VerticalLayout { padding-right: 20px;
+                        StyledText { text: root.selected-notes; link-color: #2855d9; default-color: #69717d; link-clicked(link) => { root.open-note-link(link); } }
+                    }
+                }
                 Action { text: "删除这条投递记录"; quiet: true; danger: true; clicked => { root.delete-application(); } }
             }
         }

@@ -1,6 +1,8 @@
 # 原生预览版
 
-Rust + Slint 原生版 v2.0.5 是当前主版本。旧 Electron 源码与 v1.0.3 Release 保留；下文预览记录用于追溯开发过程。当前发布 Windows x64 便携包，尚未完成的功能和平台验证见“当前范围”。
+Rust + Slint 原生版 v2.0.6 是当前主版本。旧 Electron 源码与 v1.0.3 Release 保留；下文预览记录用于追溯开发过程。当前发布 Windows x64 便携包，尚未完成的功能和平台验证见“当前范围”。
+
+v2.0.6 新增运行时本机 API 和可点击的备注网址，并修复长备注下进展流程线断开的问题。
 
 v2.0.5 新增“已推迟”进展状态。已有数据若包含该状态，需要用 v2.0.5 或更新版本打开；升级时保留程序旁的 `data/`。
 
@@ -49,11 +51,29 @@ cargo run --manifest-path native/Cargo.toml -- --data-dir native/.dev-data --imp
 
 `--smoke-test` 始终使用临时目录，执行界面回调与保存检查后自动退出，不接受旧数据导入。它不能替代真实鼠标操作、中文输入法或托盘测试。
 
+## 运行时本机 API
+
+程序运行期间会在数据目录中写入临时的 `local-api.json`，其中有仅供本机连接的端口和随机令牌。接口只监听 `127.0.0.1`；退出程序后地址文件会移除。请像保护 `applications.json` 一样保护此目录，不要分享令牌。API 请求由运行中的程序保存，列表、日历和统计会立即刷新；仍保留原有目录锁与备份机制。
+
+用同一个 EXE 的 `--api` 模式从标准输入传入一条 JSON 请求，标准输出返回 `{ "ok": true, "data": ... }` 或 `{ "ok": false, "error": ... }`。默认连接 EXE 旁的 `data/`；使用自定义数据目录时，两端都加 `--data-dir DIR`。PowerShell 例子：
+
+```powershell
+$OutputEncoding = [System.Text.UTF8Encoding]::new()
+'{"op":"list_applications","query":"小红书"}' | .\autumn-native.exe --api
+'{"op":"add_application","company":"示例公司","position":"Java 开发","date":"2026-11-03"}' | .\autumn-native.exe --api
+'{"op":"add_stage","applicationId":"app_...","type":"written_test","title":"笔试","date":"2026-11-04","status":"pending","notes":"19:00-21:00"}' | .\autumn-native.exe --api
+'{"op":"update_stage","applicationId":"app_...","id":"stage_...","status":"postponed"}' | .\autumn-native.exe --api
+```
+
+操作包括 `list_applications`（可选 `query`，匹配公司或岗位）、`get_application`（`id`）、`add_application`、`update_application`（`id`）、`add_stage`（`applicationId`）和 `update_stage`（`applicationId`、`id`）。更新时只需提供要改变的字段；`url`、`notes`、`date` 可设为 `null` 以清空。进展类型为 `applied`、`assessment`、`written_test`、`interview`、`hr`、`oc`、`offer`、`rejected`、`other`；状态为 `completed`、`pending`、`failed`、`postponed`。日期使用 `YYYY-MM-DD`。含账号密码的备注请通过标准输入传递，不要作为命令行参数。
+
 ## 当前范围
 
 已实现投递和进展的新增、编辑、删除，搜索、状态/未完成筛选、全部记录、月历、阶段统计、汇总及托盘入口。具体通过的验证以 `docs/REWRITE_PLAN.md` 为准。
 
 进展可标记为已完成、待进行、已失败或已推迟。“已推迟”保留旧场次记录，不计入“有未完成进展”，也不会仅因改期让投递显示为“已结束”；新场次应单独添加为“待进行”。
+
+投递和进展备注中的 HTTP/HTTPS 地址会在详情中显示为可点击链接；备注原文仍按纯文本保存和编辑。
 
 日历按进展日期高亮，支持月份跳转（1900–2100）、今天、搜索、仅看未完成及当天详情。缺少有效日期的节点单独提示数量。阶段统计按投递去重：同一岗位的多轮面试只算一次，统计包含所有状态。
 
