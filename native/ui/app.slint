@@ -41,10 +41,11 @@ component Field inherits Rectangle {
 component Dot inherits Rectangle {
     in property <string> state;
     width: 22px; height: 22px; border-radius: 11px;
-    background: state == "已完成" ? #eaf7ef : state == "已失败" ? #fff0f0 : white;
+    background: state == "已完成" ? #eaf7ef : state == "已失败" ? #fff0f0 : state == "已推迟" ? #f0ebff : white;
     border-width: state == "待进行" ? 1px : 0px; border-color: #c8cdd5;
     if root.state == "已完成": Path { width: 22px; height: 22px; viewbox-width: 22; viewbox-height: 22; commands: "M 6 11 L 10 15 L 16 7"; stroke: #2b9a5b; stroke-width: 1.8px; }
     if root.state == "已失败": Path { width: 22px; height: 22px; viewbox-width: 22; viewbox-height: 22; commands: "M 7 7 L 15 15 M 15 7 L 7 15"; stroke: #e85d62; stroke-width: 1.5px; }
+    if root.state == "已推迟": Path { width: 22px; height: 22px; viewbox-width: 22; viewbox-height: 22; commands: "M 8 7 L 8 15 M 14 7 L 14 15"; stroke: #7658bd; stroke-width: 1.8px; }
 
 }
 export struct StageRow { id: string, title: string, date: string, state: string }
@@ -222,7 +223,7 @@ export component AppWindow inherits Window {
                     Field { width: 220px; placeholder-text: "搜索公司 / 岗位"; text <=> root.calendar-query; edited => { root.filter-changed(); } }
                     CheckBox { text: "仅看未完成进展"; checked <=> root.pending-only; toggled => { root.filter-changed(); } }
                 }
-                HorizontalLayout { height: 24px; Text { vertical-alignment: center; text: root.calendar-summary; color: #737985; font-size: 12px; } Text { vertical-alignment: center; text: "○ 待进行     ✓ 已完成     × 已失败"; horizontal-alignment: right; color: #7d8697; font-size: 12px; } }
+                HorizontalLayout { height: 24px; Text { vertical-alignment: center; text: root.calendar-summary; color: #737985; font-size: 12px; } Text { vertical-alignment: center; text: "○ 待进行   ✓ 已完成   × 已失败   ‖ 已推迟"; horizontal-alignment: right; color: #7d8697; font-size: 12px; } }
                 HorizontalLayout { spacing: 20px;
                     Rectangle { background: white; border-radius: 10px; border-width: 1px; border-color: #e0e5ee;
                         VerticalLayout { spacing: 0px; padding: 1px;
@@ -235,8 +236,8 @@ export component AppWindow inherits Window {
                                     border-color: root.days[week * 7 + weekday].date == root.selected-date ? #2855d9 : #edf0f5;
                                     VerticalLayout { padding: 6px; spacing: 4px; alignment: start;
                                         HorizontalLayout { Text { vertical-alignment: center; text: root.days[week * 7 + weekday].label; color: root.days[week * 7 + weekday].today ? #2855d9 : root.days[week * 7 + weekday].outside ? #b2b7bf : #303640; font-size: 12px; } Text { vertical-alignment: center; text: root.days[week * 7 + weekday].count > 0 ? root.days[week * 7 + weekday].count : ""; color: #2855d9; font-size: 10px; horizontal-alignment: right; } }
-                                        for preview in root.days[week * 7 + weekday].previews: Rectangle { height: 20px; border-radius: 4px; background: preview.state == "待进行" ? #fff0cf : preview.state == "已完成" ? #e2f3e9 : #ffe7e8;
-                                            Text { vertical-alignment: center; x: 4px; width: parent.width - 8px; text: preview.title; overflow: elide; font-size: 10px; color: preview.state == "待进行" ? #925604 : preview.state == "已完成" ? #287c4b : #bb4950;  }
+                                        for preview in root.days[week * 7 + weekday].previews: Rectangle { height: 20px; border-radius: 4px; background: preview.state == "待进行" ? #fff0cf : preview.state == "已完成" ? #e2f3e9 : preview.state == "已推迟" ? #f0ebff : #ffe7e8;
+                                            Text { vertical-alignment: center; x: 4px; width: parent.width - 8px; text: preview.title; overflow: elide; font-size: 10px; color: preview.state == "待进行" ? #925604 : preview.state == "已完成" ? #287c4b : preview.state == "已推迟" ? #6f55ac : #bb4950;  }
                                         }
                                     }
                                     TouchArea { mouse-cursor: pointer; clicked => { root.select-date(root.days[week * 7 + weekday].date); } }
@@ -326,7 +327,7 @@ export component AppWindow inherits Window {
                 if root.form-mode == 2: Text { vertical-alignment: center; text: "名称 *"; color: #656d78; font-size: 12px; }
                 if root.form-mode == 2: Field { text <=> root.stage-title; }
                 if root.form-mode == 2: Text { vertical-alignment: center; text: "状态"; color: #656d78; font-size: 12px; }
-                if root.form-mode == 2: ComboBox { model: ["已完成", "待进行", "已失败"]; current-index <=> root.stage-status; }
+                if root.form-mode == 2: ComboBox { model: ["已完成", "待进行", "已失败", "已推迟"]; current-index <=> root.stage-status; }
                 Text { vertical-alignment: center; text: root.editing-application ? "投递日期请在投递节点中修改" : "日期（YYYY-MM-DD）"; color: #656d78; font-size: 12px; }
                 if !root.editing-application: Field { text <=> root.date; placeholder-text: "YYYY-MM-DD，可留空"; }
                 Text { vertical-alignment: center; text: "备注"; color: #656d78; font-size: 12px; }

@@ -50,6 +50,7 @@ fn stage_label(state: StageStatus) -> &'static str {
         StageStatus::Completed => "已完成",
         StageStatus::Pending => "待进行",
         StageStatus::Failed => "已失败",
+        StageStatus::Postponed => "已推迟",
     }
 }
 fn status_index(state: StageStatus) -> i32 {
@@ -57,6 +58,7 @@ fn status_index(state: StageStatus) -> i32 {
         StageStatus::Completed => 0,
         StageStatus::Pending => 1,
         StageStatus::Failed => 2,
+        StageStatus::Postponed => 3,
     }
 }
 struct State {
@@ -374,6 +376,7 @@ fn save_form(ui: &AppWindow, state: &mut State) -> Result<()> {
             0 => StageStatus::Completed,
             1 => StageStatus::Pending,
             2 => StageStatus::Failed,
+            3 => StageStatus::Postponed,
             _ => bail!("请选择进展状态"),
         };
         if let Some(editing) = &state.editing {
@@ -712,6 +715,14 @@ fn run() -> Result<()> {
             node.id = format!("preview-stage-{index}");
             node.application_id = second.id.clone();
         }
+        let mut postponed = second.stages[1].clone();
+        postponed.id = "preview-postponed".into();
+        postponed.kind = "written_test".into();
+        postponed.title = "笔试".into();
+        postponed.date = Some("2026-10-14".into());
+        postponed.status = StageStatus::Postponed;
+        postponed.sort_order = 15.0;
+        second.stages.push(postponed);
         fixture.push(second);
         state.borrow_mut().apps = fixture;
         set_month(&ui, &mut state.borrow_mut(), "2026-10".into());
@@ -874,13 +885,30 @@ fn run() -> Result<()> {
         ui.invoke_filter_changed();
         assert_eq!(ui.get_agenda().row_count(), 1);
         let sid = state.borrow().apps[0].stages[1].id.clone();
-        ui.invoke_edit_stage(sid.into());
+        ui.invoke_edit_stage(sid.clone().into());
         ui.set_stage_status(0);
         ui.invoke_save_form();
         assert_eq!(ui.get_agenda().row_count(), 0);
         ui.set_pending_only(false);
         ui.invoke_filter_changed();
         assert_eq!(ui.get_agenda().row_count(), 1);
+        ui.invoke_edit_stage(sid.clone().into());
+        ui.set_stage_status(3);
+        ui.invoke_save_form();
+        assert_eq!(
+            state.borrow().store.load()?[0].stages[1].status,
+            StageStatus::Postponed
+        );
+        assert_eq!(state.borrow().apps[0].state(), ApplicationState::Active);
+        assert!(ui
+            .get_agenda()
+            .row_data(0)
+            .unwrap()
+            .title
+            .contains("已推迟"));
+        ui.invoke_edit_stage(sid.into());
+        assert_eq!(ui.get_stage_status(), 3);
+        ui.invoke_cancel_form();
         ui.set_calendar_query("不存在".into());
         ui.invoke_filter_changed();
         assert_eq!(ui.get_agenda().row_count(), 0);

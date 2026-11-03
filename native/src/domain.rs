@@ -47,6 +47,7 @@ pub enum StageStatus {
     Completed,
     Pending,
     Failed,
+    Postponed,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -102,6 +103,7 @@ impl Application {
                         StageStatus::Completed => "✓",
                         StageStatus::Pending => "○",
                         StageStatus::Failed => "×",
+                        StageStatus::Postponed => "‖",
                     },
                     s.title
                 )
@@ -178,6 +180,24 @@ mod tests {
         app.stages[0].kind = "offer".into();
         app.stages[0].status = StageStatus::Completed;
         assert_eq!(app.state(), ApplicationState::Offer);
+    }
+    #[test]
+    fn postponed_stage_keeps_application_active_and_round_trips() {
+        let mut app = fixture().remove(0);
+        app.stages[1].status = StageStatus::Postponed;
+        assert_eq!(app.state(), ApplicationState::Active);
+        assert!(!app.has_pending());
+        assert!(app.chain().contains("‖"));
+        let mut new_exam = app.stages[1].clone();
+        new_exam.id = "rescheduled-exam".into();
+        new_exam.status = StageStatus::Pending;
+        new_exam.sort_order += 10.0;
+        app.stages.push(new_exam);
+        assert!(app.matches("", 1));
+        assert!(app.matches("", 2));
+        let json = serde_json::to_string(&app).unwrap();
+        assert!(json.contains("\"postponed\""));
+        assert_eq!(serde_json::from_str::<Application>(&json).unwrap(), app);
     }
     #[test]
     fn reject_wrong_owner_duplicate_ids_and_unknown_status() {
