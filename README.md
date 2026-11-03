@@ -2,7 +2,7 @@
 
 ## 当前版本：v2.0.6 原生便携版
 
-当前主版本采用 Rust + Slint。到 GitHub Releases 下载 Windows x64 ZIP，解压到可写目录，双击 `autumn-native.exe` 使用，无需安装 Node.js 或浏览器运行时。
+当前主版本采用 Rust + Slint。可从 [v2.0.6 发布页](https://github.com/pmssl/autumn-recruitment-dashboard/releases/tag/v2.0.6)直接下载 Windows x64 的 `autumn-native.exe`，放在可写目录后双击运行，无需安装；ZIP 是含同一 EXE 和说明文件的可选压缩包。无需安装 Node.js 或浏览器运行时。
 
 v2.0.6 新增运行时本机 API，可在程序运行时查询、新增和修改投递及进展；详情中的备注网址可直接点击，长备注可滚动查看，流程连接线保持连续。
 
@@ -14,7 +14,7 @@ v2.0.3 修复招聘进度搜索无匹配结果时，搜索框和筛选按钮突�
 
 v2.0.2 更新 Slint，修复 Windows 上窗口首次打开及从托盘恢复后可能出现的空白或透明区域。当前固定到包含修复的上游开发提交，详见 [窗口重绘试验](docs/SLINT_REPAINT_TRIAL.md)。
 
-支持投递和进展管理、搜索、状态与未完成筛选、全部记录、日历、统计、托盘。数据默认保存在 EXE 旁的 `data/applications.json`；移动程序时一起移动 `data` 文件夹。升级前退出托盘中的程序，备份 `data`，再替换 EXE。发布包不包含个人数据。
+支持投递和进展管理、搜索、状态与未完成筛选、全部记录、日历、统计、托盘。首次运行会在 EXE 旁创建 `data/`，首次保存后生成 `data/applications.json`；移动程序时一起移动 `data/`。升级前退出托盘中的程序，备份 `data/`，再替换 EXE。发布附件不包含个人数据。
 
 旧版数据不会自动导入：退出旧版并备份其数据后，可运行 `autumn-native.exe --import-legacy "旧版 applications.json 的完整路径"`，仅允许导入到尚无数据的新目录。也可用 `--data-dir` 指定数据目录。具体开发与数据说明见 [native/README.md](native/README.md)。
 
@@ -43,7 +43,7 @@ Windows 桌面程序，保留招聘进度、全部记录、统计、Excel 导入
 每次保存保留上一版本 `applications.json.bak`，它不是完整历史备份。可自行复制整个数据文件夹备份。
 如需恢复，先退出程序，再用备份替换 applications.json。
 读取损坏的数据会阻止编辑，避免覆盖原文件；保存失败会在窗口内提示并提供重试按钮。
-首次运行桌面版为空白记录，浏览器 localStorage 数据不会自动迁移。
+在没有既有桌面版数据的情况下，首次运行为空白记录；浏览器 localStorage 数据不会自动迁移。
 Excel 导入只处理第一个工作表的公司、岗位、日期，每行生成一条投递；日期建议使用 YYYY-MM-DD 文本，重复导入不会去重。
 
 ## 开发与打包

@@ -1,4 +1,4 @@
-# 原生预览版
+# 原生版
 
 Rust + Slint 原生版 v2.0.6 是当前主版本。旧 Electron 源码与 v1.0.3 Release 保留；下文预览记录用于追溯开发过程。当前发布 Windows x64 便携包，尚未完成的功能和平台验证见“当前范围”。
 
@@ -12,7 +12,7 @@ v2.0.3 固定招聘进度筛选栏高度，搜索无匹配结果时不再拉高�
 
 v2.0.2 将 Slint 固定到包含 Windows 重绘修复的上游提交；用户实测首次打开和托盘恢复不再出现空白。该提交属于 1.19.0 开发版，跨显示器移动尚未实测，详见 `docs/SLINT_REPAINT_TRIAL.md`。
 
-本机已构建 Windows 预览程序 `native/release/autumn-native.exe`，可直接启动。Windows Release 使用图形子系统启动，不附带控制台窗口；开发用 Debug 构建保留控制台输出。2026-10-27 测得 9.69 MB（9.24 MiB），不含系统库；这不是安装包，也不是最终功能体积。
+当前 Windows 便携版可从 [v2.0.6 发布页](https://github.com/pmssl/autumn-recruitment-dashboard/releases/tag/v2.0.6)单独下载 EXE，或下载包含同一 EXE 和说明文件的 ZIP。本机默认入口为 `native/release/autumn-native.exe`；v2.0.6 的 EXE 为 10,538,496 字节（约 10.05 MiB）。Windows Release 使用图形子系统启动，不附带控制台窗口；开发用 Debug 构建保留控制台输出。
 
 ## 开发
 
@@ -35,11 +35,11 @@ $env:CARGO_TARGET_DIR = "$env:USERPROFILE/.cache/autumn-native-target"
 
 ## 数据隔离
 
-默认使用可执行文件旁边的 `data/` 文件夹，与启动时所在工作目录无关。点击“数据目录”可打开它；`--data-dir DIR` 仍可显式指定其他位置。程序目录需要有写入权限。
+默认使用可执行文件旁边的 `data/` 文件夹，与启动时所在工作目录无关。首次启动会创建该文件夹，首次保存后生成 `applications.json`。点击“数据目录”可打开它；`--data-dir DIR` 仍可显式指定其他位置。程序目录需要有写入权限。
 
 移动程序时，请一起移动同目录的 `data/`，其中包含当前数据、自动备份及迁移备份。开发构建的数据位于实际 Debug EXE 旁，`--smoke-test` 仍使用临时目录。
 
-2026-10-28 已将本机此前 C 盘原生预览版的数据与备份完整复制到 `native/release/data/`；原目录保留为迁移备份，之后的编辑以程序目录数据为准。
+2026-10-28 曾将此前 C 盘原生预览版的数据与备份复制到 `native/release/data/`。这是历史迁移记录；当前数据位置以实际启动的 EXE 所在目录或 `--data-dir` 为准。
 
 显式导入旧 JSON 副本（目标目录必须尚无 applications.json）：
 
@@ -53,7 +53,7 @@ cargo run --manifest-path native/Cargo.toml -- --data-dir native/.dev-data --imp
 
 ## 运行时本机 API
 
-程序运行期间会在数据目录中写入临时的 `local-api.json`，其中有仅供本机连接的端口和随机令牌。接口只监听 `127.0.0.1`；退出程序后地址文件会移除。请像保护 `applications.json` 一样保护此目录，不要分享令牌。API 请求由运行中的程序保存，列表、日历和统计会立即刷新；仍保留原有目录锁与备份机制。
+程序运行期间会在数据目录中写入临时的 `local-api.json`，其中有仅供本机连接的端口和随机令牌。接口只监听 `127.0.0.1`；正常退出后地址文件会移除，异常退出可能留下失效文件。请像保护 `applications.json` 一样保护此目录，不要分享令牌。API 请求由运行中的程序保存，列表、日历和统计会立即刷新；仍保留原有目录锁与备份机制。
 
 用同一个 EXE 的 `--api` 模式从标准输入传入一条 JSON 请求，标准输出返回 `{ "ok": true, "data": ... }` 或 `{ "ok": false, "error": ... }`。默认连接 EXE 旁的 `data/`；使用自定义数据目录时，两端都加 `--data-dir DIR`。PowerShell 例子：
 
@@ -65,11 +65,11 @@ $OutputEncoding = [System.Text.UTF8Encoding]::new()
 '{"op":"update_stage","applicationId":"app_...","id":"stage_...","status":"postponed"}' | .\autumn-native.exe --api
 ```
 
-操作包括 `list_applications`（可选 `query`，匹配公司或岗位）、`get_application`（`id`）、`add_application`、`update_application`（`id`）、`add_stage`（`applicationId`）和 `update_stage`（`applicationId`、`id`）。更新时只需提供要改变的字段；`url`、`notes`、`date` 可设为 `null` 以清空。进展类型为 `applied`、`assessment`、`written_test`、`interview`、`hr`、`oc`、`offer`、`rejected`、`other`；状态为 `completed`、`pending`、`failed`、`postponed`。日期使用 `YYYY-MM-DD`。含账号密码的备注请通过标准输入传递，不要作为命令行参数。
+操作包括 `list_applications`（可选 `query`，匹配公司或岗位）、`get_application`（`id`）、`add_application`、`update_application`（`id`）、`add_stage`（`applicationId`）和 `update_stage`（`applicationId`、`id`）。更新时只需提供要改变的字段；投递的 `url`、`notes`，以及进展的 `date`、`notes` 可设为 `null` 以清空。进展类型为 `applied`、`assessment`、`written_test`、`interview`、`hr`、`oc`、`offer`、`rejected`、`other`；状态为 `completed`、`pending`、`failed`、`postponed`。日期使用 `YYYY-MM-DD`。含账号密码的备注请通过标准输入传递，不要作为命令行参数。
 
 ## 当前范围
 
-已实现投递和进展的新增、编辑、删除，搜索、状态/未完成筛选、全部记录、月历、阶段统计、汇总及托盘入口。具体通过的验证以 `docs/REWRITE_PLAN.md` 为准。
+已实现投递和进展的新增、编辑、删除，搜索、状态/未完成筛选、全部记录、月历、阶段统计、汇总及托盘入口。早期重构验证记录见 `docs/REWRITE_PLAN.md`；当前版本的验证内容见发布页。
 
 进展可标记为已完成、待进行、已失败或已推迟。“已推迟”保留旧场次记录，不计入“有未完成进展”，也不会仅因改期让投递显示为“已结束”；新场次应单独添加为“待进行”。
 
@@ -79,12 +79,12 @@ $OutputEncoding = [System.Text.UTF8Encoding]::new()
 
 尚需完成开机启动、再次启动恢复窗口，以及三平台实机验收。Linux 预览版暂不启用关闭隐藏，避免缺少托盘宿主时无法恢复窗口。
 
-## 旧版外观还原
+## 旧版外观还原（历史记录）
 
-界面已按旧版样式重绘，范围和开发截图入口见 `docs/NATIVE_UI.md`。本轮新版单独保存为 `native/release/autumn-native-ui.exe`；请先从托盘退出正在运行的预览版，再打开新文件。当前更新版默认使用该 EXE 旁的 `data/`。
+界面已按旧版样式重绘，范围和开发截图入口见 `docs/NATIVE_UI.md`。2026-10-28 的 UI 预览曾单独保存为 `native/release/autumn-native-ui.exe`；当前版本应使用 `native/release/autumn-native.exe` 或 GitHub 发布页提供的 EXE。
 
-2026-10-28 的 UI 还原版实测 9.95 MB（9.49 MiB），Release 冒烟测试通过，仍为无控制台窗口的 Windows GUI 程序。
+2026-10-28 的 UI 还原预览版实测 9.95 MB（9.49 MiB），Release 冒烟测试通过；该数值仅是历史记录。
 
 ## 启动没有打开窗口时
 
-同一新版数据目录只允许一个实例写入。旧预览版可能仍驻留在托盘，必须通过窗口中的“退出”或托盘菜单退出；点击窗口关闭按钮通常只是隐藏。新版会用提示窗口显示目录占用、数据损坏等启动错误。
+同一数据目录只允许一个实例写入。已有程序可能仍驻留在托盘，需通过窗口中的“退出”或托盘菜单退出；点击窗口关闭按钮通常只是隐藏。程序会用提示窗口显示目录占用、数据损坏等启动错误。
