@@ -301,7 +301,7 @@ export component AppWindow inherits Window {
                 ListView { for stage in root.stages: Rectangle { height: max(90px, stage-body.preferred-height);
                     Rectangle { x: 10px; y: 22px; width: 1px; height: parent.height - 22px; background: #e0e4e9; }
                     Dot { x: 0px; y: 0px; state: stage.state; }
-                    stage-body := VerticalLayout { x: 35px; width: parent.width - 35px; padding-bottom: 12px; spacing: 7px; alignment: start;
+                    stage-body := VerticalLayout { x: 35px; width: parent.width - 35px - 24px; padding-bottom: 12px; spacing: 7px; alignment: start;
                             HorizontalLayout { Text { vertical-alignment: center; text: stage.title; font-weight: 600; color: #303640; } Text { vertical-alignment: center; text: stage.date; color: #9da3ac; font-size: 11px; horizontal-alignment: right; } }
                             Text { vertical-alignment: center; text: stage.state; color: #9299a3; font-size: 11px; }
                             if stage.has-notes: StyledText { width: stage-body.width - 20px; text: stage.notes; link-color: #2855d9; default-color: #69717d; link-clicked(link) => { root.open-note-link(link); } }

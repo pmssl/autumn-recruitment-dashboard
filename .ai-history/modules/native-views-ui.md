@@ -6,4 +6,6 @@
 
 **当前基线已确认**：招聘流程和日历详情的进展行随内容调整高度；建立基线时这是 `native/ui/app.slint`、`native/README.md` 相对 `f7d9e56` 的工作区改动，不代表现有发布包已包含。见 `decisions/0001-current-baseline.md`。
 
+**当前源码已确认**：岗位详情进展正文在右侧预留 24px，使日期和操作按钮避开 `ListView` 的纵向滚动条；长备注仍按可用宽度换行，流程线仍随行高延伸。证据：`native/ui/app.slint`；2026-11-04 的 Debug 详情截图已检查有滚动条和长备注的布局。GitHub v2.0.6 发布包尚未包含此修改。
+
 **未知**：跨平台真实中文输入、托盘和窗口行为仍未完成实机验收；不能把回调冒烟或截图视为这些体验的验证。证据：`native/README.md`、`docs/REWRITE_PLAN.md`。
