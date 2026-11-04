@@ -268,7 +268,7 @@ fn refresh_views(ui: &AppWindow, state: &State) {
         .map(|(a, s)| AgendaRow {
             app_id: a.id.as_str().into(),
             title: format!("{} · {}", s.title, stage_label(s.status)).into(),
-            detail: format!(
+            detail: note_links::styled_notes(&format!(
                 "{} / {}{}",
                 a.company,
                 a.position,
@@ -277,8 +277,7 @@ fn refresh_views(ui: &AppWindow, state: &State) {
                     .filter(|n| !n.is_empty())
                     .map(|n| format!(" · {n}"))
                     .unwrap_or_default()
-            )
-            .into(),
+            )),
         })
         .collect::<Vec<_>>();
     ui.set_agenda(ModelRc::new(VecModel::from(agenda)));
@@ -753,8 +752,7 @@ fn run() -> Result<()> {
         fixture[0].company = "示例科技".into();
         fixture[0].position = "后端开发工程师".into();
         fixture[0].stages[1].date = Some("2026-10-15".into());
-        fixture[0].stages[1].notes =
-            Some("测评链接：https://example.com/test\n请按时完成。".into());
+        fixture[0].stages[1].notes = Some("测评链接：https://example.com/test\n考试时间：19:00-21:00\n请使用电脑和摄像头。\n试卷有选择、填空、编程题。\n每部分完成后不可返回。\n请保持网络稳定。\n如遇故障可重新打开链接。\n请按时完成。".into());
         let mut after_note = fixture[0].stages[1].clone();
         after_note.id = "preview-after-note".into();
         after_note.title = "后续面试".into();

@@ -51,7 +51,7 @@ component Dot inherits Rectangle {
 export struct StageRow { id: string, title: string, date: string, state: string, notes: styled-text, has-notes: bool }
 export struct ApplicationRow { id: string, company: string, position: string, chain: string, state: string, current: string, latest: string, nodes: [StageRow] }
 export struct DayCell { date: string, label: string, count: int, outside: bool, today: bool, previews: [StageRow] }
-export struct AgendaRow { app-id: string, title: string, detail: string }
+export struct AgendaRow { app-id: string, title: string, detail: styled-text }
 export struct StatRow { title: string, count: int, ratio: float }
 export component AppWindow inherits Window {
     title: "秋招看板"; preferred-width: 1280px; preferred-height: 820px;
@@ -252,11 +252,11 @@ export component AppWindow inherits Window {
                             Text { vertical-alignment: center; text: root.selected-date; color: #20252d; font-size: 17px; font-weight: 600; }
                             Text { vertical-alignment: center; text: root.agenda.length + " 项进展 · 点击查看投递详情"; color: #9299a5; font-size: 11px; }
                             if root.agenda.length == 0: Text { vertical-alignment: center; text: "当天没有符合条件的进展"; color: #9299a5; font-size: 12px; }
-                            ListView { for entry in root.agenda: Rectangle { height: 126px;
-                                VerticalLayout { padding-top: 12px; spacing: 6px; alignment: start;
+                            ListView { for entry in root.agenda: Rectangle { height: max(88px, agenda-content.preferred-height);
+                                agenda-content := VerticalLayout { padding-top: 12px; padding-bottom: 12px; spacing: 6px; alignment: start;
                                     Rectangle { height: 1px; background: #edf0f5; }
                                     Text { vertical-alignment: center; text: entry.title; wrap: word-wrap; font-weight: 600; color: #303640; }
-                                    Text { vertical-alignment: center; text: entry.detail; wrap: word-wrap; overflow: elide; color: #7d8695; font-size: 12px; }
+                                    StyledText { width: parent.width - 18px; text: entry.detail; default-color: #7d8695; default-font-size: 12px; link-color: #2855d9; link-clicked(link) => { root.open-note-link(link); } }
                                     Action { text: "查看投递 →"; quiet: true; clicked => { root.open-application(entry.app-id); } }
                                 }
                             } }
@@ -298,22 +298,14 @@ export component AppWindow inherits Window {
                 HorizontalLayout { alignment: start; Action { text: "打开投递链接 ↗"; quiet: true; clicked => { root.open-link(); } } Action { text: "编辑投递"; quiet: true; clicked => { root.edit-application(); } } }
                 Rectangle { height: 1px; background: #edf0f3; }
                 HorizontalLayout { Text { vertical-alignment: center; text: "招聘流程"; color: #20252d; font-size: 14px; font-weight: 600; } Action { text: "＋ 添加进展"; quiet: true; clicked => { root.new-stage(); } } }
-                ListView { for stage in root.stages: Rectangle { height: stage.has-notes ? 230px : 100px;
-                    HorizontalLayout { spacing: 13px;
-                        Rectangle { width: 22px; height: parent.height;
-                            Rectangle { x: 10px; y: 22px; width: 1px; height: parent.height - 22px; background: #e0e4e9; }
-                            Dot { x: 0px; y: 0px; state: stage.state; }
-                        }
-                        VerticalLayout { spacing: 7px; alignment: start;
+                ListView { for stage in root.stages: Rectangle { height: max(90px, stage-body.preferred-height);
+                    Rectangle { x: 10px; y: 22px; width: 1px; height: parent.height - 22px; background: #e0e4e9; }
+                    Dot { x: 0px; y: 0px; state: stage.state; }
+                    stage-body := VerticalLayout { x: 35px; width: parent.width - 35px; padding-bottom: 12px; spacing: 7px; alignment: start;
                             HorizontalLayout { Text { vertical-alignment: center; text: stage.title; font-weight: 600; color: #303640; } Text { vertical-alignment: center; text: stage.date; color: #9da3ac; font-size: 11px; horizontal-alignment: right; } }
                             Text { vertical-alignment: center; text: stage.state; color: #9299a3; font-size: 11px; }
-                            if stage.has-notes: ScrollView { height: 120px;
-                                VerticalLayout { padding-right: 20px;
-                                    StyledText { text: stage.notes; link-color: #2855d9; default-color: #69717d; link-clicked(link) => { root.open-note-link(link); } }
-                                }
-                            }
+                            if stage.has-notes: StyledText { width: stage-body.width - 20px; text: stage.notes; link-color: #2855d9; default-color: #69717d; link-clicked(link) => { root.open-note-link(link); } }
                             HorizontalLayout { alignment: end; Action { text: "编辑"; quiet: true; clicked => { root.edit-stage(stage.id); } } Action { text: "删除"; quiet: true; danger: true; clicked => { root.delete-stage(stage.id); } } }
-                        }
                     }
                 } }
                 if root.selected-has-notes: ScrollView { height: 90px;
