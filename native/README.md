@@ -1,10 +1,10 @@
 # 原生版
 
-Rust + Slint 原生版 v2.0.6 是当前主版本。旧 Electron 源码与 v1.0.3 Release 保留；下文预览记录用于追溯开发过程。当前发布 Windows x64 便携包，尚未完成的功能和平台验证见“当前范围”。
+Rust + Slint 原生版 v2.0.7 是当前主版本。旧 Electron 源码与 v1.0.3 Release 保留；下文预览记录用于追溯开发过程。当前发布 Windows x64 便携包，尚未完成的功能和平台验证见“当前范围”。
 
 v2.0.6 新增运行时本机 API 和可点击的备注网址，并修复长备注下进展流程线断开的问题。
 
-当前源码和本地 `native/release/autumn-native.exe` 已修复岗位详情列表滚动条遮挡进展日期及删除按钮的问题：正文右侧预留 24px，长备注仍按可用宽度换行。含长备注的 Debug 截图、14 项测试、Windows Release 构建和冒烟测试已通过。GitHub v2.0.6 发布附件尚未包含这次修复。
+v2.0.7 让日历详情和招聘流程的进展行按内容调整高度；岗位详情的正文右侧预留 24px，避免滚动条遮挡日期和删除按钮。长备注仍按可用宽度换行；含长备注的 Debug 截图已检查布局。
 
 v2.0.5 新增“已推迟”进展状态。已有数据若包含该状态，需要用 v2.0.5 或更新版本打开；升级时保留程序旁的 `data/`。
 
@@ -14,7 +14,7 @@ v2.0.3 固定招聘进度筛选栏高度，搜索无匹配结果时不再拉高�
 
 v2.0.2 将 Slint 固定到包含 Windows 重绘修复的上游提交；用户实测首次打开和托盘恢复不再出现空白。该提交属于 1.19.0 开发版，跨显示器移动尚未实测，详见 `docs/SLINT_REPAINT_TRIAL.md`。
 
-当前 Windows 便携版可从 [v2.0.6 发布页](https://github.com/pmssl/autumn-recruitment-dashboard/releases/tag/v2.0.6)单独下载 EXE，或下载包含同一 EXE 和说明文件的 ZIP。本机默认入口为 `native/release/autumn-native.exe`；v2.0.6 的 EXE 为 10,538,496 字节（约 10.05 MiB）。Windows Release 使用图形子系统启动，不附带控制台窗口；开发用 Debug 构建保留控制台输出。
+当前 Windows 便携版可从 [v2.0.7 发布页](https://github.com/pmssl/autumn-recruitment-dashboard/releases/tag/v2.0.7)单独下载 EXE，或下载包含同一 EXE 和说明文件的 ZIP。本机默认入口为 `native/release/autumn-native.exe`；Windows Release 使用图形子系统启动，不附带控制台窗口；开发用 Debug 构建保留控制台输出。
 
 ## 开发
 
