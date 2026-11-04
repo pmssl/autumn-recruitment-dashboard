@@ -1,5 +1,25 @@
 # 秋招看板桌面版
 
+## 界面预览
+
+以下截图使用程序内置的虚构示例数据，展示当前原生版界面。点击图片可查看大图。
+
+### 招聘进度
+
+[![招聘进度页面](docs/images/dashboard.png)](docs/images/dashboard.png)
+
+### 日历
+
+[![日历页面](docs/images/calendar.png)](docs/images/calendar.png)
+
+### 投递详情
+
+[![投递详情页面](docs/images/application-detail.png)](docs/images/application-detail.png)
+
+### 数据统计
+
+[![数据统计页面](docs/images/statistics.png)](docs/images/statistics.png)
+
 ## 当前版本：v2.0.6 原生便携版
 
 当前主版本采用 Rust + Slint。可从 [v2.0.6 发布页](https://github.com/pmssl/autumn-recruitment-dashboard/releases/tag/v2.0.6)直接下载 Windows x64 的 `autumn-native.exe`，放在可写目录后双击运行，无需安装；ZIP 是含同一 EXE 和说明文件的可选压缩包。无需安装 Node.js 或浏览器运行时。
