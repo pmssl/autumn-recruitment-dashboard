@@ -779,6 +779,21 @@ fn run() -> Result<()> {
         postponed.sort_order = 15.0;
         second.stages.push(postponed);
         fixture.push(second);
+        for kind in 0..3 {
+            for index in 0..10 {
+                let mut extra = fixture[if kind == 1 { 1 } else { 0 }].clone();
+                extra.id = format!("preview-list-{kind}-{index}");
+                extra.company = format!("示例企业 {kind}-{index:02}");
+                if kind == 2 {
+                    extra.stages[1].status = StageStatus::Failed;
+                }
+                for (node_index, node) in extra.stages.iter_mut().enumerate() {
+                    node.id = format!("preview-list-stage-{kind}-{index}-{node_index}");
+                    node.application_id = extra.id.clone();
+                }
+                fixture.push(extra);
+            }
+        }
         state.borrow_mut().apps = fixture;
         set_month(&ui, &mut state.borrow_mut(), "2026-10".into());
         state.borrow_mut().selected_date = "2026-10-15".into();

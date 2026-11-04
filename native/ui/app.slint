@@ -159,7 +159,7 @@ export component AppWindow inherits Window {
                 for application in root.applications: Rectangle {
                     height: 80px;
                     Rectangle {
-                        height: 68px; background: white; border-radius: 9px; border-width: 1px; border-color: #e7e9ed;
+                        width: parent.width - 24px; height: 68px; background: white; border-radius: 9px; border-width: 1px; border-color: #e7e9ed;
                         HorizontalLayout {
                             padding-left: 20px; padding-right: 16px; spacing: 20px;
                             Rectangle { width: 230px;
@@ -194,14 +194,14 @@ export component AppWindow inherits Window {
                 background: white; border-width: 1px; border-color: #e7e9ed; border-radius: 9px;
                 VerticalLayout { spacing: 0px;
                     Rectangle { height: 48px; background: #fbfbfc;
-                        HorizontalLayout { padding-left: 18px; padding-right: 18px; spacing: 16px;
+                        HorizontalLayout { padding-left: 18px; padding-right: 42px; spacing: 16px;
                             for title[index] in ["公司", "岗位", "当前进展", "最近更新", "结果"]: Text { min-width: 0px; preferred-width: 0px; horizontal-stretch: 1; vertical-alignment: center; text: index == 2 && root.filter-index == 2 ? "未完成进展" : title; color: #8e949d; font-size: 12px; }
                         }
                     }
                     ListView {
                         for application in root.applications: Rectangle { height: 53px;
                             Rectangle { y: 0px; height: 1px; background: #edf0f3; }
-                            HorizontalLayout { padding-left: 18px; padding-right: 18px; spacing: 16px;
+                            HorizontalLayout { padding-left: 18px; padding-right: 42px; spacing: 16px;
                                 Text { min-width: 0px; preferred-width: 0px; horizontal-stretch: 1; vertical-alignment: center; text: application.company; overflow: elide; color: #20252d; }
                                 Text { min-width: 0px; preferred-width: 0px; horizontal-stretch: 1; vertical-alignment: center; text: application.position; overflow: elide; color: #20252d; }
                                 Text { min-width: 0px; preferred-width: 0px; horizontal-stretch: 1; vertical-alignment: center; text: application.current; overflow: elide; color: #515862; }

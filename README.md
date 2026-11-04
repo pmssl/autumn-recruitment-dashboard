@@ -20,13 +20,15 @@
 
 [![数据统计页面](docs/images/statistics.png)](docs/images/statistics.png)
 
-## 当前版本：v2.0.7 原生便携版
+## 当前版本：v2.0.8 原生便携版
 
-当前主版本采用 Rust + Slint。可从 [v2.0.7 发布页](https://github.com/pmssl/autumn-recruitment-dashboard/releases/tag/v2.0.7)直接下载 Windows x64 的 `autumn-native.exe`，放在可写目录后双击运行，无需安装；ZIP 是含同一 EXE 和说明文件的可选压缩包。无需安装 Node.js 或浏览器运行时。
+当前主版本采用 Rust + Slint。可从 [v2.0.8 发布页](https://github.com/pmssl/autumn-recruitment-dashboard/releases/tag/v2.0.8)直接下载 Windows x64 的 `autumn-native.exe`，放在可写目录后双击运行，无需安装；ZIP 是含同一 EXE 和说明文件的可选压缩包。无需安装 Node.js 或浏览器运行时。
 
 v2.0.6 新增运行时本机 API，可在程序运行时查询、新增和修改投递及进展；详情中的备注网址可直接点击，长备注可滚动查看，流程连接线保持连续。
 
 v2.0.7 让日历详情和招聘流程的进展行随备注长度调整高度，并在岗位详情的进展列表右侧预留滚动条空间，避免遮挡日期与删除按钮。上方投递详情截图展示了修复后的布局。
+
+v2.0.8 在招聘进度中让整张投递卡片避开滚动条，全部记录的表头和内容也为滚动条留出空间。
 
 v2.0.5 新增“已推迟”进展状态，用于保留改期的历史场次；新场次可单独标记为“待进行”。包含该状态的数据需使用 v2.0.5 或更新版本打开。
 
