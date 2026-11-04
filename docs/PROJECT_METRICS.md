@@ -10,7 +10,7 @@ Skill 复用下方统计脚本，不维护另一份统计实现。若当前会�
 npm run metrics
 ```
 
-也可直接运行 `node scripts/project-metrics.cjs`，不需要先安装 npm 依赖。
+也可直接运行 `node .agents/skills/project-metrics/project-metrics.cjs`，不需要先安装 npm 依赖。
 
 输出包括：
 
@@ -23,7 +23,7 @@ npm run metrics
 
 ```powershell
 npm run metrics -- --out metrics-report/current.json
-node scripts/project-metrics.cjs --json
+node .agents/skills/project-metrics/project-metrics.cjs --json
 ```
 
 `--json` 直接运行 Node 时标准输出是纯 JSON，适合其他工具读取。

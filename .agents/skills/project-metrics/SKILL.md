@@ -5,23 +5,23 @@ description: 统计秋招看板项目的代码行数、源码体积、已有安�
 
 # 项目代码量与体积统计
 
-使用项目已有的 `scripts/project-metrics.cjs`，不要重新编写统计逻辑或复制历史数字作为当前结果。
-这是项目内 Skill，依赖同一仓库中的统计工具，不需要 npm install。
+使用本 Skill 目录中的 `project-metrics.cjs`，不要重新编写统计逻辑或复制历史数字作为当前结果。
+这是项目内 Skill，统计脚本随 Skill 一起保存在仓库中，不需要 npm install。
 
 ## 执行
 
 项目根目录是本 Skill 目录向上三级的位置，确认该目录同时包含 `package.json` 和
-`scripts/project-metrics.cjs`。从根目录运行：
+`.agents/skills/project-metrics/project-metrics.cjs`。从根目录运行：
 
 ```sh
-node scripts/project-metrics.cjs --json
+node .agents/skills/project-metrics/project-metrics.cjs --json
 ```
 
 优先解析纯 JSON 输出。用户希望自行在终端查看时，提供 `npm run metrics`。
 只有需要保存报告时才运行：
 
 ```sh
-node scripts/project-metrics.cjs --json --out metrics-report/current.json
+node .agents/skills/project-metrics/project-metrics.cjs --json --out metrics-report/current.json
 ```
 
 历史快照使用不同文件名，例如 `metrics-report/before-refactor.json`，避免覆盖用于对比的基线。

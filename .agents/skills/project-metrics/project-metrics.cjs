@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 
-const root = path.resolve(__dirname, '..');
+const root = path.resolve(__dirname, '..', '..', '..');
 const args = process.argv.slice(2);
 const options = { json: false, out: null };
 for (let i = 0; i < args.length; i++) {
@@ -63,7 +63,7 @@ for (const name of new Set(candidates)) {
   const content = buffer.toString('utf8');
   const lines = content ? content.split(/\r\n|\n|\r/) : [];
   if (lines.length && lines.at(-1) === '') lines.pop();
-  const group = name.startsWith('native/') ? 'Rust / Slint 新版' : /^(src|electron)\//.test(name) ? 'React / Electron 旧版' : name.startsWith('scripts/') ? '项目工具' : '其他';
+  const group = name.startsWith('native/') ? 'Rust / Slint 新版' : /^(src|electron)\//.test(name) ? 'React / Electron 旧版' : name.startsWith('.agents/skills/project-metrics/') ? '项目工具' : '其他';
   files.push({ path: name, category, group, extension: ext || '(none)', bytes: buffer.length, lines: lines.length, nonEmptyLines: lines.filter(line => line.trim()).length });
 }
 files.sort((a, b) => a.path.localeCompare(b.path));
