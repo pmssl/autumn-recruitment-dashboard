@@ -57,6 +57,8 @@ cargo run --manifest-path native/Cargo.toml -- --data-dir native/.dev-data --imp
 
 ## 运行时本机 API
 
+需要让 Codex 通过 API 查询或更新看板数据时，可使用仓库内的 [autumn-dashboard-api Skill](../.agents/skills/autumn-dashboard-api/SKILL.md)。
+
 程序运行期间会在数据目录中写入临时的 `local-api.json`，其中有仅供本机连接的端口和随机令牌。接口只监听 `127.0.0.1`；正常退出后地址文件会移除，异常退出可能留下失效文件。请像保护 `applications.json` 一样保护此目录，不要分享令牌。API 请求由运行中的程序保存，列表、日历和统计会立即刷新；仍保留原有目录锁与备份机制。
 
 用同一个 EXE 的 `--api` 模式从标准输入传入一条 JSON 请求，标准输出返回 `{ "ok": true, "data": ... }` 或 `{ "ok": false, "error": ... }`。默认连接 EXE 旁的 `data/`；使用自定义数据目录时，两端都加 `--data-dir DIR`。PowerShell 例子：

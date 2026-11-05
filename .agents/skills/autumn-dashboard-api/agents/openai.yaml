@@ -1,0 +1,6 @@
+interface:
+  display_name: "秋招看板数据 API"
+  short_description: "查询、添加及更正运行中的秋招看板投递和进展"
+  default_prompt: "使用 $autumn-dashboard-api 查询或更新当前秋招看板数据，并回读核对结果。"
+policy:
+  allow_implicit_invocation: true
