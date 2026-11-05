@@ -1,0 +1,6 @@
+interface:
+  display_name: "项目 Skill 与规则使用统计"
+  short_description: "查看项目 Skill 使用次数和 RULE.md 的逐轮改动"
+  default_prompt: "使用 $project-usage-metrics 查看本项目各 Skill 的使用次数和 RULE.md 改动次数。"
+policy:
+  allow_implicit_invocation: true

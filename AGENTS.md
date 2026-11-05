@@ -57,3 +57,7 @@
 3. 已确认的设计变化同步更新 `architecture.md` 或对应 `modules/` 文档。重要且长期有效的取舍新增编号决策记录，写明背景、原因、考虑过的替代方案、影响和证据；缺乏历史证据时不得补写臆测原因。
 4. 不需要更新设计文档的代码改动，在建议的提交说明中记录改动意图。文档中的测试和验证结论只写实际执行的检查及其结果。
 5. 保持 AI History 在 Git 仓库内，不记录个人投递数据、令牌或密钥。未经用户明确授权，不自动执行 Git Commit、推送或发布。
+
+## 每轮使用统计
+
+每轮最终答复前，从仓库根目录运行 `python .agents/skills/project-usage-metrics/usage_tracker.py record`；本轮每个**实际应用**的项目内 Skill 追加一个 `--skill <名称>`。仅提及或查看 Skill 文件不算使用；例行运行统计脚本本身不算使用 `project-usage-metrics`；同一 Skill 每轮只记一次。把命令输出的本轮与累计汇总简短附在最终答复中。工具只记录调用后的轮次；`RULE.md` 改动按轮末文件哈希判断，Git 历史提交数另列，不相加。若统计命令失败，如实说明，不编造次数。统计口径和只读查询见 [.agents/skills/project-usage-metrics/README.md](.agents/skills/project-usage-metrics/README.md)。
