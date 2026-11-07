@@ -7,6 +7,7 @@
 - **已确认**：当前主入口是 `native/` 的 Rust + Slint 便携程序；根目录的 React/Vite + Electron 代码与 v1.0.3 使用说明作为旧版保留。证据：`README.md`、`native/README.md`、`native/Cargo.toml`、`package.json`、Git 合并提交 `3d7379d`。
 - **已确认**：原生程序的领域与数据层在 `native/src/{domain,store,views,api,local_api,note_links}.rs`，`main.rs` 连接 Slint 回调、状态、存储与本机 API，界面声明在 `native/ui/app.slint`。`native/src/lib.rs` 导出非 UI 模块；`native/build.rs` 编译 Slint。证据：上述源码与 `native/src/lib.rs`。
 - **已确认**：运行数据默认位于实际 EXE 旁的 `data/applications.json`；`--data-dir` 可覆盖。旧 Electron 数据使用另一目录，原生版只显式导入旧 JSON 副本。证据：`native/src/main.rs`、`native/src/store.rs`、`native/README.md`。
+- **已确认（当前源码）**：原生程序可按 `click-stats` Cargo feature 构建点击统计版；无此 feature 的默认版不读取或写入点击统计。统计版把生效按钮操作的累计次数原子保存到数据目录的 `click-stats.json`，与 `applications.json` 分开。证据：`native/Cargo.toml`、`native/src/click_stats.rs`、`native/src/main.rs`、`native/ui/app.slint`。
 
 ## 依赖方向
 
@@ -19,6 +20,7 @@ Slint UI (`native/ui/app.slint`)
         ├── 文件存储 (`store.rs`)
         ├── 请求操作 (`api.rs`) ↔ 本机传输 (`local_api.rs`)
         └── 备注链接展示 (`note_links.rs`)
+        └── 可选点击计数 (`click_stats.rs`)
 ```
 
 **已确认**：`api.rs` 修改内存中的投递集合；运行中的程序接收本机请求、保存并刷新 UI。`local_api.rs` 只监听 `127.0.0.1`，使用数据目录中的临时地址与随机令牌文件。证据：`native/src/api.rs`、`native/src/local_api.rs`、`native/src/main.rs`、`native/README.md`。

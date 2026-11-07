@@ -10,4 +10,6 @@
 
 **当前源码已确认**：招聘进度与全部记录共用“全部、进行中、有未完成进展、Offer、已结束”筛选。招聘进度整张卡片宽度减少 24px，使边框与滚动条分离；全部记录的表头与行内容右侧预留 24px，保持对齐。证据：`native/ui/app.slint`；Debug 捕获使用各状态至少 10 条虚构投递，两页的滚动条截图已检查。此修改随 v2.0.8 发布。
 
+**当前源码已确认，尚未发布**：`click-stats` feature 让 `main.rs` 在导航、筛选、日历和 CRUD 回调确认操作生效后写入本地点击次数；Slint 内直接关闭详情、取消删除确认和切换日历复选框的动作通过 `track-action` 回调记录。重复选择当前页面或筛选项不会计数，自动刷新和输入框逐字输入不计数。默认构建中的计数器为空实现，不读写统计文件。证据：`native/Cargo.toml`、`native/src/main.rs`、`native/src/click_stats.rs`、`native/ui/app.slint`。
+
 **未知**：跨平台真实中文输入、托盘和窗口行为仍未完成实机验收；不能把回调冒烟或截图视为这些体验的验证。证据：`native/README.md`、`docs/REWRITE_PLAN.md`。

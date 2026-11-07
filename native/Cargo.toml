@@ -5,6 +5,10 @@ edition = "2021"
 publish = false
 description = "Native cross-platform recruitment dashboard preview"
 
+[features]
+default = []
+click-stats = []
+
 [dependencies]
 anyhow = "1"
 serde = { version = "1", features = ["derive"] }

@@ -6,4 +6,6 @@
 
 **已确认。** `native/src/store.rs` 为目录取得独占锁；拒绝直接使用旧 Electron 配置目录。读取失败时不覆盖原文件。保存前比对磁盘快照，写入临时文件并持久化，上一版本写入 `applications.json.bak`；导入仅允许空目标并保留源文件及原始副本。证据：`Store::{open,load,save,import_legacy}`、`import_is_copy_only_and_preserves_source`、`corrupt_data_and_external_edits_are_never_overwritten`、`two_writers_cannot_open_same_directory`。
 
+**当前源码已确认，尚未发布。** 可选的 `click-stats` 构建使用 `native/src/click_stats.rs` 将生效按钮操作按名称累计到同一数据目录的 `click-stats.json`，不修改 `applications.json`。统计文件仅在首次计数时创建；保存使用临时文件持久化，损坏或版本不支持时拒绝覆盖。普通构建不读取或写入该文件。证据：`native/Cargo.toml`、`native/src/click_stats.rs`、`persists_counts_and_preserves_invalid_file` 测试。
+
 **未知**：旧版未来新增字段是否始终能由原生程序正确解释；现有测试只覆盖仓库内的 `native/tests/legacy.json` 样本。

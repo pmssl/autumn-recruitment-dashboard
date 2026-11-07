@@ -18,6 +18,22 @@ v2.0.2 将 Slint 固定到包含 Windows 重绘修复的上游提交；用户实
 
 当前 Windows 便携版可从 [v2.0.8 发布页](https://github.com/pmssl/autumn-recruitment-dashboard/releases/tag/v2.0.8)单独下载 EXE，或下载包含同一 EXE 和说明文件的 ZIP。本机默认入口为 `native/release/autumn-native.exe`；Windows Release 使用图形子系统启动，不附带控制台窗口；开发用 Debug 构建保留控制台输出。
 
+## 本地点击统计构建（当前源码，尚未发布）
+
+本地可生成两个便携 EXE：`native/release/autumn-native.exe` 不记录点击；`native/release/autumn-native-click-stats.exe` 记录页面导航、筛选、日历、投递详情及表单等按钮的**生效操作**。重复选择当前页面或筛选项、保存失败、无效日期和无法打开的链接不增加对应计数。搜索输入框的逐字输入、程序自动刷新和 API 操作不属于按钮点击。统计版只在实际有点击后创建 EXE 旁 `data/click-stats.json`，按中文操作名称累计次数；普通版既不读取也不修改该文件。两个 EXE 共用同目录的投递数据，须退出一个再打开另一个。
+
+在本机可用下列命令构建两个配置；`--features click-stats` 对应统计版：
+
+```powershell
+$env:CARGO_TARGET_DIR = "$env:USERPROFILE/.cache/autumn-native-target"
+& "$env:USERPROFILE/.cargo/bin/cargo.exe" build --release --manifest-path native/Cargo.toml
+Copy-Item "$env:CARGO_TARGET_DIR/release/autumn-native.exe" native/release/autumn-native.exe
+& "$env:USERPROFILE/.cargo/bin/cargo.exe" build --release --manifest-path native/Cargo.toml --features click-stats
+Copy-Item "$env:CARGO_TARGET_DIR/release/autumn-native.exe" native/release/autumn-native-click-stats.exe
+```
+
+如果默认 EXE 正在运行，先从窗口或托盘选择“退出”再替换。请保留 `native/release/data/`；点击计数和投递记录分别存放，升级程序不会重置计数。
+
 ## 开发
 
 安装 Rust stable 和平台编译工具后，在仓库根目录执行：

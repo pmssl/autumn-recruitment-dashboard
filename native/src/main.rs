@@ -13,6 +13,8 @@ use autumn_native::{
 };
 use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
 use std::{cell::RefCell, io::Read, path::PathBuf, rc::Rc};
+mod click_stats;
+use click_stats::ClickTracker;
 
 slint::include_modules!();
 const TYPES: [&str; 9] = [
@@ -65,6 +67,7 @@ fn status_index(state: StageStatus) -> i32 {
 }
 struct State {
     store: Store,
+    tracker: ClickTracker,
     apps: Vec<Application>,
     editing: Option<String>,
     deleting: Option<String>,
@@ -532,10 +535,12 @@ fn run() -> Result<()> {
         println!("已导入副本：{count} 条投递；源文件未修改");
     }
     let apps = store.load()?;
+    let tracker = ClickTracker::open(&directory)?;
     let ui = AppWindow::new()?;
     ui.set_data_location(store.path().display().to_string().into());
     let state = Rc::new(RefCell::new(State {
         store,
+        tracker,
         apps,
         editing: None,
         deleting: None,
@@ -543,39 +548,140 @@ fn run() -> Result<()> {
         selected_date: today(),
     }));
     refresh(&ui, &state.borrow());
+    macro_rules! mark {
+        ($s:ident, $u:ident, $name:expr) => {
+            if let Err(error) = $s.tracker.record($name) {
+                $u.set_notice(format!("点击统计保存失败：{error:#}").into());
+            }
+        };
+    }
     macro_rules! bind {($method:ident, |$u:ident,$s:ident $(,$arg:ident : $typ:ty)*| $body:block)=>{{
         let weak=ui.as_weak();let state=state.clone();
         ui.$method(move |$($arg:$typ),*| {if let Some($u)=weak.upgrade(){let mut guard=state.borrow_mut();let $s=&mut *guard;$body}});
     }}}
+    bind!(on_select_page, |u, s, index: i32| {
+        const PAGES: [&str; 4] = [
+            "导航/招聘进度",
+            "导航/全部记录",
+            "导航/日历",
+            "导航/数据统计",
+        ];
+        if let Some(name) = PAGES.get(index as usize) {
+            if u.get_page() != index {
+                u.set_page(index);
+                mark!(s, u, name);
+            }
+        }
+    });
+    bind!(on_select_filter, |u, s, index: i32| {
+        const FILTERS: [&str; 5] = ["全部", "进行中", "有未完成进展", "Offer", "已结束"];
+        if let Some(name) = FILTERS.get(index as usize) {
+            if u.get_filter_index() != index {
+                u.set_filter_index(index);
+                refresh(&u, s);
+                mark!(
+                    s,
+                    u,
+                    &format!(
+                        "{}/筛选/{name}",
+                        if u.get_page() == 0 {
+                            "招聘进度"
+                        } else {
+                            "全部记录"
+                        }
+                    )
+                );
+            }
+        }
+    });
+    {
+        let state = state.clone();
+        let weak = ui.as_weak();
+        ui.on_track_action(move |name| {
+            if let Some(u) = weak.upgrade() {
+                if let Err(error) = state.borrow_mut().tracker.record(name.as_str()) {
+                    u.set_notice(format!("点击统计保存失败：{error:#}").into());
+                }
+            }
+        });
+    }
     bind!(on_month_move, |u, s, delta: i32| {
         if let Some(month) = views::move_month(&s.month, delta) {
+            let changed = month != s.month;
             set_month(&u, s, month);
+            if changed {
+                mark!(
+                    s,
+                    u,
+                    if delta < 0 {
+                        "日历/上个月"
+                    } else {
+                        "日历/下个月"
+                    }
+                );
+            }
         }
     });
     bind!(on_month_select, |u, s| {
+        let changed = u.get_month().as_str() != s.month;
         set_month(&u, s, u.get_month().to_string());
+        if changed && u.get_month().as_str() == s.month {
+            mark!(s, u, "日历/跳转");
+        }
     });
     bind!(on_calendar_today, |u, s| {
+        let changed = s.month != &today()[..7];
         set_month(&u, s, today()[..7].to_owned());
+        if changed {
+            mark!(s, u, "日历/今天");
+        }
     });
     bind!(on_select_date, |u, s, date: SharedString| {
         if valid_date(&date) && views::parse_month(&date[..7]).is_some() {
+            let changed = s.selected_date != date.as_str();
             s.selected_date = date.to_string();
             s.month = date[..7].to_owned();
             refresh_views(&u, s);
+            if changed {
+                mark!(s, u, "日历/选择日期");
+            }
         }
     });
     bind!(on_filter_changed, |u, s| {
         refresh(&u, s);
     });
     bind!(on_open_application, |u, s, aid: SharedString| {
-        u.set_selected_id(aid);
-        refresh(&u, s);
+        if s.apps.iter().any(|a| a.id == aid.as_str()) {
+            let changed = u.get_selected_id() != aid;
+            u.set_selected_id(aid);
+            refresh(&u, s);
+            if changed {
+                let page = match u.get_page() {
+                    0 => "招聘进度",
+                    1 => "全部记录",
+                    2 => "日历",
+                    _ => "其他",
+                };
+                mark!(s, u, &format!("{page}/查看投递详情"));
+            }
+        }
     });
     bind!(on_new_application, |u, s| {
         clear_form(&u, s);
         u.set_form_heading("新增投递".into());
         u.set_form_mode(1);
+        mark!(
+            s,
+            u,
+            &format!(
+                "{}/新增投递",
+                if u.get_page() == 0 {
+                    "招聘进度"
+                } else {
+                    "全部记录"
+                }
+            )
+        );
     });
     bind!(on_edit_application, |u, s| {
         if let Some(a) = s
@@ -594,12 +700,24 @@ fn run() -> Result<()> {
             u.set_form_heading("编辑投递".into());
             u.set_editing_application(true);
             u.set_form_mode(1);
+            mark!(s, u, "投递详情/编辑投递");
         }
     });
     bind!(on_new_stage, |u, s| {
         clear_form(&u, s);
         u.set_form_heading("添加进展".into());
         u.set_form_mode(2);
+        mark!(s, u, "投递详情/添加进展");
+    });
+    bind!(on_new_stage_from_card, |u, s, aid: SharedString| {
+        if s.apps.iter().any(|a| a.id == aid.as_str()) {
+            u.set_selected_id(aid);
+            refresh(&u, s);
+            clear_form(&u, s);
+            u.set_form_heading("添加进展".into());
+            u.set_form_mode(2);
+            mark!(s, u, "招聘进度/卡片添加进展");
+        }
     });
     bind!(on_edit_stage, |u, s, sid: SharedString| {
         if let Some(stage) = s
@@ -618,31 +736,74 @@ fn run() -> Result<()> {
             u.set_notes(stage.notes.unwrap_or_default().into());
             u.set_form_heading("编辑进展".into());
             u.set_form_mode(2);
+            mark!(s, u, "投递详情/编辑进展");
         }
     });
     bind!(on_save_form, |u, s| {
-        if let Err(error) = save_form(&u, s) {
-            u.set_notice(format!("保存失败：{error:#}").into());
+        let mode = u.get_form_mode();
+        match save_form(&u, s) {
+            Ok(()) => mark!(
+                s,
+                u,
+                if mode == 1 {
+                    "投递表单/保存"
+                } else {
+                    "进展表单/保存"
+                }
+            ),
+            Err(error) => u.set_notice(format!("保存失败：{error:#}").into()),
         }
     });
     bind!(on_cancel_form, |u, s| {
+        let mode = u.get_form_mode();
         s.editing = None;
         u.set_form_mode(0);
         u.set_notice("".into());
+        if mode != 0 {
+            mark!(
+                s,
+                u,
+                if mode == 1 {
+                    "投递表单/取消"
+                } else {
+                    "进展表单/取消"
+                }
+            );
+        }
+    });
+    bind!(on_close_form, |u, s| {
+        let mode = u.get_form_mode();
+        s.editing = None;
+        u.set_form_mode(0);
+        u.set_notice("".into());
+        if mode != 0 {
+            mark!(
+                s,
+                u,
+                if mode == 1 {
+                    "投递表单/关闭"
+                } else {
+                    "进展表单/关闭"
+                }
+            );
+        }
     });
     bind!(on_delete_stage, |u, s, sid: SharedString| {
         s.deleting = Some(sid.to_string());
         u.set_confirm_text("删除这个进展节点？其他节点保留。".into());
         u.set_confirm_visible(true);
+        mark!(s, u, "投递详情/请求删除进展");
     });
     bind!(on_delete_application, |u, s| {
         s.deleting = None;
         u.set_confirm_text("删除当前投递及其全部进展？".into());
         u.set_confirm_visible(true);
+        mark!(s, u, "投递详情/请求删除投递");
     });
     bind!(on_confirm_delete, |u, s| {
         let mut next = s.apps.clone();
         let selected = u.get_selected_id();
+        let deleting_stage = s.deleting.is_some();
         if let Some(sid) = &s.deleting {
             if let Some(a) = next.iter_mut().find(|a| a.id == selected.as_str()) {
                 a.stages.retain(|st| &st.id != sid);
@@ -656,6 +817,15 @@ fn run() -> Result<()> {
                 s.apps = next;
                 u.set_notice("删除已保存".into());
                 refresh(&u, s);
+                mark!(
+                    s,
+                    u,
+                    if deleting_stage {
+                        "删除确认/删除进展"
+                    } else {
+                        "删除确认/删除投递"
+                    }
+                );
             }
             Err(e) => u.set_notice(format!("删除失败：{e:#}").into()),
         };
@@ -671,15 +841,27 @@ fn run() -> Result<()> {
         {
             if let Err(e) = open::that(url) {
                 u.set_notice(format!("无法打开链接：{e}").into());
+            } else {
+                mark!(s, u, "投递详情/打开投递链接");
             }
         } else {
             u.set_notice("未填写有效的 http/https 投递链接".into());
         }
     });
-    bind!(on_open_note_link, |u, _s, url: SharedString| {
+    bind!(on_open_note_link, |u, s, url: SharedString| {
         if url.starts_with("https://") || url.starts_with("http://") {
             if let Err(e) = open::that(url.as_str()) {
                 u.set_notice(format!("无法打开备注链接：{e}").into());
+            } else {
+                mark!(
+                    s,
+                    u,
+                    if u.get_selected_id().is_empty() {
+                        "日历/打开备注链接"
+                    } else {
+                        "投递详情/打开备注链接"
+                    }
+                );
             }
         } else {
             u.set_notice("仅支持打开 http/https 备注链接".into());
@@ -688,17 +870,27 @@ fn run() -> Result<()> {
     bind!(on_open_folder, |u, s| {
         if let Err(e) = open::that(s.store.path().parent().unwrap()) {
             u.set_notice(format!("无法打开目录：{e}").into());
+        } else {
+            mark!(s, u, "导航/数据目录");
         }
     });
     {
         let weak = ui.as_weak();
+        let state = state.clone();
         ui.on_clear_notice(move || {
             if let Some(u) = weak.upgrade() {
                 u.set_notice("".into());
+                if let Err(error) = state.borrow_mut().tracker.record("提示/关闭") {
+                    u.set_notice(format!("点击统计保存失败：{error:#}").into());
+                }
             }
         });
     }
-    ui.on_quit(|| {
+    let quit_state = state.clone();
+    ui.on_quit(move || {
+        if let Err(error) = quit_state.borrow_mut().tracker.record("导航/退出") {
+            eprintln!("点击统计保存失败：{error:#}");
+        }
         let _ = slint::quit_event_loop();
     });
 
@@ -910,6 +1102,11 @@ fn run() -> Result<()> {
         return Ok(());
     }
     if smoke {
+        ui.invoke_select_page(2);
+        ui.invoke_select_page(2);
+        ui.invoke_select_page(0);
+        ui.invoke_select_filter(1);
+        ui.invoke_select_filter(1);
         ui.invoke_new_application();
         ui.set_company("中文测试公司".into());
         ui.set_position("开发工程师".into());
@@ -1011,6 +1208,17 @@ fn run() -> Result<()> {
         ui.invoke_confirm_delete();
         assert!(state.borrow().store.load()?.is_empty());
         assert_eq!(ui.get_visible_stats().row_count(), 0);
+        #[cfg(feature = "click-stats")]
+        {
+            let counts: serde_json::Value =
+                serde_json::from_slice(&std::fs::read(directory.join("click-stats.json"))?)?;
+            assert_eq!(counts["counts"]["导航/日历"], 1);
+            assert_eq!(counts["counts"]["招聘进度/筛选/进行中"], 1);
+            assert_eq!(counts["counts"]["投递表单/保存"], 2);
+            assert_eq!(counts["counts"]["进展表单/保存"], 5);
+        }
+        #[cfg(not(feature = "click-stats"))]
+        assert!(!directory.join("click-stats.json").exists());
         println!("PASS: Chinese model, application/stage CRUD, required fields, persistence, pending filter, calendar refresh/navigation/search, stage statistics");
         slint::Timer::single_shot(std::time::Duration::from_millis(1200), || {
             let _ = slint::quit_event_loop();

@@ -42,6 +42,12 @@ v2.0.2 更新 Slint，修复 Windows 上窗口首次打开及从托盘恢复后�
 
 旧版数据不会自动导入：退出旧版并备份其数据后，可运行 `autumn-native.exe --import-legacy "旧版 applications.json 的完整路径"`，仅允许导入到尚无数据的新目录。也可用 `--data-dir` 指定数据目录。具体开发与数据说明见 [native/README.md](native/README.md)。
 
+## 本机 API 与项目 Skill
+
+仓库提供 [autumn-dashboard-api Skill](.agents/skills/autumn-dashboard-api/SKILL.md)，用于让 Codex 通过**正在运行的原生程序**查询、新增和修改投递及招聘进展。它会先核对目标投递，写入后再回读确认；适合补充笔试、面试通知或更正已有进展。Skill 是仓库中的操作说明，不包含在单独下载的 EXE 内。
+
+程序运行时会在 EXE 旁的 `data/` 中建立仅供本机连接的 API 地址文件。仓库内的 `autumn-native.exe --api` 从标准输入接收一条 JSON 请求，连接正在运行、使用同一数据目录的程序；修改由运行中的程序保存并刷新界面。程序未运行时不能调用该接口。若使用 `--data-dir`，API 调用也须指定相同目录。操作字段和 PowerShell 示例见 [本机 API 参考](.agents/skills/autumn-dashboard-api/references/api.md)；数据目录与备份行为见 [原生版说明](native/README.md#运行时本机-api)。
+
 本次仅提供 Windows x64 产物；macOS/Linux 尚未完成实机验证。当前不提供 Excel 导入、开机启动和重复启动恢复窗口；数据目录被其他实例占用时会提示退出已有实例。
 
 旧版 v1.0.3 Release 和下方 Electron 源码使用说明继续保留。
