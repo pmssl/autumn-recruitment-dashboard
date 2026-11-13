@@ -6,5 +6,5 @@
 
 **已确认（本机、GitHub Actions 与模拟测试）**：`.github/workflows/pages.yml` 在 `main` 相关文件推送时构建并调用 `web/scripts/deploy.mjs`。脚本用唯一的 `CLOUDFLARE_API_TOKEN` 查询单个授权账号，创建或复用名为 `autumn-dashboard` 的 D1 和带账号 ID 后缀的 Direct Upload Pages 项目，生成不入库的 Wrangler 配置，执行远端 migration，设置 `DASHBOARD_TOKEN` Secret 后部署。2026-11-13 已从本机运行该脚本，远端迁移成功，正式域名根页面返回 200、未授权 API 返回 401、授权读取返回 200；向空云端写入空数组后回读 revision 1、投递 0 条。推送提交 `de3ab59` 后 GitHub Actions run `43382289557` 的安装、测试、构建及部署步骤全部通过。`web/scripts/cloudflare.test.mjs` 验证首次创建、后续复用、多账号拒绝、临时传输失败重试和口令派生。网页访问口令由该 API Token 派生，更换 Token 后须重新部署，原口令失效。网页与桌面数据独立；`web/scripts/import-data.mjs` 提供一次性、仅对空云端执行的数据导入。
 
-**约束**：真实投递 JSON 和口令不入库；初始页面仅包含空白登录表单；会话口令保存在浏览器 `sessionStorage`，不是 D1 凭据。多窗口冲突不会自动合并，用户需要刷新再编辑。当前布局沿用桌面尺寸，移动端体验尚未验收。
+**约束**：真实投递 JSON 和口令不入库；初始页面仅包含空白登录表单；会话口令保存在浏览器 `sessionStorage`，不是 D1 凭据。多窗口冲突不会自动合并，用户需要刷新再编辑。网页入口通过 `resize_viewport` 将初始及后续浏览器视口尺寸同步给 Slint 窗口，网页编译时解除桌面布局派生的 680px 高度上限；本地浏览器在 900×700 与 1440×900 下验证画布与视口同尺寸，900×700 的日历页布局正常。共享 UI 仍有 880×680 最小尺寸，手机宽度需要横向滚动，尚未做移动版重排。
 单文档写入上限为 1.9 MB，以低于 D1 的 2,000,000 字节单行/字符串限制；接近此规模时需拆分数据表。

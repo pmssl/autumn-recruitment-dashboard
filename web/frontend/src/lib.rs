@@ -12,6 +12,26 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::{spawn_local, JsFuture};
 slint::include_modules!();
+thread_local! {
+    static WEB_UI: RefCell<Option<slint::Weak<AppWindow>>> = const { RefCell::new(None) };
+}
+
+#[wasm_bindgen]
+pub fn resize_viewport(width: f32, height: f32) {
+    WEB_UI.with(|ui| {
+        if let Some(ui) = ui.borrow().as_ref().and_then(slint::Weak::upgrade) {
+            ui.window().set_size(slint::LogicalSize::new(width.max(880.), height.max(680.)));
+        }
+    });
+}
+
+fn browser_size() -> (f32, f32) {
+    let window = web_sys::window().expect("browser window");
+    (
+        window.inner_width().ok().and_then(|v| v.as_f64()).unwrap_or(1280.) as f32,
+        window.inner_height().ok().and_then(|v| v.as_f64()).unwrap_or(820.) as f32,
+    )
+}
 const TYPES: [&str; 9] = [
     "applied",
     "assessment",
@@ -878,6 +898,9 @@ pub fn load_font_from_bytes(font_data: js_sys::Uint8Array) {
 #[wasm_bindgen]
 pub fn start() {
     let ui = AppWindow::new().expect("create Slint window");
+    WEB_UI.with(|slot| *slot.borrow_mut() = Some(ui.as_weak()));
+    let (width, height) = browser_size();
+    resize_viewport(width, height);
     ui.set_data_location("Cloudflare D1".into());
     ui.set_notice("正在读取云端数据…".into());
     let date = today();

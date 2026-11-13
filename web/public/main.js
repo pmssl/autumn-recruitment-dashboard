@@ -1,4 +1,4 @@
-import init, { load_font_from_bytes, start } from "./pkg/autumn_web.js";
+import init, { load_font_from_bytes, resize_viewport, start } from "./pkg/autumn_web.js";
 
 const form = document.querySelector("#login");
 const canvas = document.querySelector("#canvas");
@@ -19,6 +19,7 @@ async function openDashboard(token) {
   const fontResponse = await fetch("/fonts/NotoSansSC-Regular.otf");
   if (!fontResponse.ok) throw new Error("中文字体加载失败");
   load_font_from_bytes(new Uint8Array(await fontResponse.arrayBuffer()));
+  window.addEventListener("resize", () => resize_viewport(window.innerWidth, window.innerHeight));
   try {
     start();
   } catch (error) {
