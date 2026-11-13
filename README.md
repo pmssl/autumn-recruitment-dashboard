@@ -1,5 +1,7 @@
 # 秋招看板桌面版
 
+Rust + Slint Cloudflare Pages 网页版已部署在 [秋招看板网页](https://autumn-dashboard-5dabf352e76a.pages.dev)，配置与使用说明见 [web/README.md](web/README.md)。网页使用同项目 Pages Functions 与 D1；原生 EXE 的本地数据不会自动同步到云端。
+
 ## 界面预览
 
 以下截图使用程序内置的虚构示例数据，展示当前原生版界面。点击图片可查看大图。

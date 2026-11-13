@@ -1,0 +1,28 @@
+[package]
+name = "autumn-web"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde-wasm-bindgen = "0.6"
+chrono = { version = "0.4", default-features = false, features = ["std"] }
+js-sys = "0.3"
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+web-sys = { version = "0.3", features = ["Window", "Location", "Storage", "Request", "RequestInit", "RequestMode", "Response", "Headers"] }
+slint = { git = "https://github.com/slint-ui/slint", rev = "08a297b7151e52b98b500b4424a8dee770fc7b58", default-features = false, features = ["std", "compat-1-18", "backend-winit", "renderer-femtovg"] }
+
+[build-dependencies]
+slint-build = { git = "https://github.com/slint-ui/slint", rev = "08a297b7151e52b98b500b4424a8dee770fc7b58" }
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1

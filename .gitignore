@@ -23,3 +23,10 @@ __pycache__/
 native/target/
 native/.dev-data/
 metrics-report/
+
+# Cloudflare Pages web build and local state
+web/dist/
+web/frontend/target/
+web/wrangler.jsonc
+web/.wrangler/
+web/.dev.vars*

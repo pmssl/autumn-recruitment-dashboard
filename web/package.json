@@ -1,0 +1,17 @@
+{
+  "name": "autumn-dashboard-pages",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test functions/api/data.test.js scripts/cloudflare.test.mjs",
+    "dev": "wrangler pages dev dist",
+    "configure": "node scripts/configure.mjs",
+    "import": "node scripts/import-data.mjs",
+    "deploy": "node scripts/deploy.mjs",
+    "access-token": "node scripts/access-token.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
