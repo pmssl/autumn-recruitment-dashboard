@@ -8,7 +8,7 @@
 - **已确认**：原生程序的领域与数据层在 `native/src/{domain,store,views,api,local_api,note_links}.rs`，`main.rs` 连接 Slint 回调、状态、存储与本机 API，界面声明在 `native/ui/app.slint`。`native/src/lib.rs` 导出非 UI 模块；`native/build.rs` 编译 Slint。证据：上述源码与 `native/src/lib.rs`。
 - **已确认**：运行数据默认位于实际 EXE 旁的 `data/applications.json`；`--data-dir` 可覆盖。旧 Electron 数据使用另一目录，原生版只显式导入旧 JSON 副本。证据：`native/src/main.rs`、`native/src/store.rs`、`native/README.md`。
 - **已确认（当前源码）**：原生程序可按 `click-stats` Cargo feature 构建点击统计版；无此 feature 的默认版不读取或写入点击统计。统计版把生效按钮操作的累计次数原子保存到数据目录的 `click-stats.json`，与 `applications.json` 分开。证据：`native/Cargo.toml`、`native/src/click_stats.rs`、`native/src/main.rs`、`native/ui/app.slint`。
-- **已确认（已从本机部署）**：`web/` 是单个 Cloudflare Pages 项目的网页适配。Rust + Slint 前端编译为浏览器 WebAssembly；同项目 Pages Functions 通过 D1 绑定保存云端数据。部署脚本凭单账号范围的 Cloudflare API Token 创建或复用 Pages 与 D1，运行迁移并部署。2026-11-13 已验证正式域名和受保护的读取接口；GitHub Actions 自动部署待验证。网页与 EXE 分别使用 D1 和本地 JSON，不自动同步。证据：`web/frontend/Cargo.toml`、`web/frontend/src/lib.rs`、`web/functions/api/data.js`、`web/scripts/{cloudflare.mjs,deploy.mjs}`、`.github/workflows/pages.yml`。
+- **已确认（本机及 GitHub Actions 均已部署）**：`web/` 是单个 Cloudflare Pages 项目的网页适配。Rust + Slint 前端编译为浏览器 WebAssembly；同项目 Pages Functions 通过 D1 绑定保存云端数据。部署脚本凭单账号范围的 Cloudflare API Token 创建或复用 Pages 与 D1，运行迁移并部署。2026-11-13 已验证正式域名、受保护的读写接口及推送触发的 GitHub Actions 成功部署。网页与 EXE 分别使用 D1 和本地 JSON，不自动同步。证据：`web/frontend/Cargo.toml`、`web/frontend/src/lib.rs`、`web/functions/api/data.js`、`web/scripts/{cloudflare.mjs,deploy.mjs}`、`.github/workflows/pages.yml`、GitHub Actions run `43382289557`。
 
 ## 依赖方向
 
