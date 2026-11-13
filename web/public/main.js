@@ -4,6 +4,7 @@ const form = document.querySelector("#login");
 const canvas = document.querySelector("#canvas");
 const tokenInput = document.querySelector("#token");
 const message = document.querySelector("#message");
+const EVENT_LOOP_STARTED = "Using exceptions for control flow, don't mind me. This isn't actually an error!";
 
 async function openDashboard(token) {
   const response = await fetch("/api/data", {
@@ -14,7 +15,12 @@ async function openDashboard(token) {
   sessionStorage.setItem("dashboard-token", token);
   form.style.display = "none";
   canvas.style.display = "block";
-  await init();
+  try {
+    await init();
+  } catch (error) {
+    // winit throws this after scheduling the browser event loop.
+    if (!(error instanceof Error && error.message === EVENT_LOOP_STARTED)) throw error;
+  }
 }
 
 form.addEventListener("submit", async (event) => {

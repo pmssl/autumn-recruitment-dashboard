@@ -1,6 +1,6 @@
 # Pages 网页适配
 
-**已确认**：`web/frontend/build.rs` 从 `native/ui/app.slint` 生成不含原生托盘的网页界面；`web/frontend/src/lib.rs` 复用 `native/src/{domain,views,note_links}.rs`，在浏览器运行投递、进展、筛选、日历和统计回调。浏览器通过同源 HTTP API 读写，不使用原生的 `Store`、托盘、本机 API 或点击统计。`web/public/` 提供口令输入界面与 Slint canvas。WebAssembly 构建在 2026-11-13 使用 `wasm-pack` 完成；尚未完成真实浏览器交互验收。
+**已确认**：`web/frontend/build.rs` 从 `native/ui/app.slint` 生成不含原生托盘的网页界面；`web/frontend/src/lib.rs` 复用 `native/src/{domain,views,note_links}.rs`，在浏览器运行投递、进展、筛选、日历和统计回调。浏览器通过同源 HTTP API 读写，不使用原生的 `Store`、托盘、本机 API 或点击统计。`web/public/` 提供口令输入界面与 Slint canvas。WebAssembly 构建在 2026-11-13 使用 `wasm-pack` 完成；本地 Wrangler 页面已实际验证登录及刷新后显示画布，完整业务交互尚未验收。`web/public/main.js` 只在 `init()` 边界接纳 Winit 0.30.13 注册浏览器事件循环后的固定控制流异常，其他启动错误仍显示在登录表单。证据：用户线上复现、Winit `src/platform_impl/web/event_loop/mod.rs`、本地浏览器登录与刷新。
 
 **已确认**：`web/functions/api/data.js` 接受带 Bearer 口令的 `GET/PUT /api/data`，口令来自 Pages Secret `DASHBOARD_TOKEN`，无有效口令即拒绝请求。D1 表由 `web/migrations/0001_dashboard.sql` 创建，保存与原生版兼容的投递 JSON 数组和单调增加的 revision；写入前验证主要字段，旧 revision 返回 409。`web/functions/api/data.test.js` 覆盖鉴权、写入回读、冲突拒绝和无效字段。2026-11-13 在 Wrangler 本地 D1 上实际验证未授权 401、读取 200、写入 200、旧版本 409；根页面和 Wasm 资源响应 200。
 
