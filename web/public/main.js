@@ -1,4 +1,4 @@
-import init from "./pkg/autumn_web.js";
+import init, { load_font_from_bytes, start } from "./pkg/autumn_web.js";
 
 const form = document.querySelector("#login");
 const canvas = document.querySelector("#canvas");
@@ -15,8 +15,12 @@ async function openDashboard(token) {
   sessionStorage.setItem("dashboard-token", token);
   form.style.display = "none";
   canvas.style.display = "block";
+  await init();
+  const fontResponse = await fetch("/fonts/NotoSansSC-Regular.otf");
+  if (!fontResponse.ok) throw new Error("中文字体加载失败");
+  load_font_from_bytes(new Uint8Array(await fontResponse.arrayBuffer()));
   try {
-    await init();
+    start();
   } catch (error) {
     // winit throws this after scheduling the browser event loop.
     if (!(error instanceof Error && error.message === EVENT_LOOP_STARTED)) throw error;
@@ -40,5 +44,7 @@ if (existing) {
   openDashboard(existing).catch(() => {
     sessionStorage.removeItem("dashboard-token");
     message.textContent = "请重新输入访问口令";
+    form.style.display = "block";
+    canvas.style.display = "none";
   });
 }

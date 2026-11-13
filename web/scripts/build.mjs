@@ -9,6 +9,10 @@ mkdirSync(output, { recursive: true });
 for (const file of ["index.html", "main.js"]) {
   copyFileSync(resolve(root, "public", file), resolve(output, file));
 }
+mkdirSync(resolve(output, "fonts"), { recursive: true });
+for (const file of ["NotoSansSC-Regular.otf", "OFL.txt"]) {
+  copyFileSync(resolve(root, "public", "fonts", file), resolve(output, "fonts", file));
+}
 const result = spawnSync("wasm-pack", [
   "build", resolve(root, "frontend"), "--release", "--target", "web",
   "--out-dir", resolve(output, "pkg"),

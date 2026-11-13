@@ -862,7 +862,20 @@ fn load_data(weak: slint::Weak<AppWindow>, state: Rc<RefCell<State>>) {
     });
 }
 
-#[wasm_bindgen(start)]
+#[wasm_bindgen]
+pub fn load_font_from_bytes(font_data: js_sys::Uint8Array) {
+    use slint::fontique_011::fontique;
+
+    let blob = fontique::Blob::new(std::sync::Arc::new(font_data.to_vec()));
+    let mut collection = slint::fontique_011::shared_collection();
+    let fonts = collection.register_fonts(blob, None);
+    collection.append_fallbacks(
+        fontique::FallbackKey::new(fontique::Script::from_bytes(*b"Hani"), None),
+        fonts.iter().map(|font| font.0),
+    );
+}
+
+#[wasm_bindgen]
 pub fn start() {
     let ui = AppWindow::new().expect("create Slint window");
     ui.set_data_location("Cloudflare D1".into());

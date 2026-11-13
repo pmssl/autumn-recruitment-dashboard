@@ -16,13 +16,15 @@ $env:CLOUDFLARE_API_TOKEN = '<你的 Cloudflare API Token>'
 npm run access-token
 ```
 
-不要把 API Token 输入网页。更换 API Token 后，下次部署会更新网页访问口令；旧口令随之失效。2026-11-13 已从本机完成首次远端部署，验证正式域名根页面 200、未授权 API 401、授权读取 200，以及空数据的远端写入和回读；浏览器交互仍需验收。
+不要把 API Token 输入网页。更换 API Token 后，下次部署会更新网页访问口令；旧口令随之失效。2026-11-13 已从本机完成首次远端部署，验证正式域名根页面 200、未授权 API 401、授权读取 200，以及空数据的远端写入和回读；已在浏览器验证登录显示看板，完整业务交互仍需验收。
 
 此项目包含个人投递和面试信息。请勿把真实 `applications.json`、口令、Cloudflare Token 或生成的 `wrangler.jsonc` 提交到 Git。
 
 ## 本地构建和预览
 
 安装 Rust、`wasm32-unknown-unknown` target、`wasm-pack`、Node.js 22+。在 Windows GNU 工具链下，构建缓存建议放在纯英文路径，避免旧 MinGW 无法链接中文路径。
+
+网页构建会将 `public/fonts/NotoSansSC-Regular.otf` 作为独立静态资源复制到 `dist/fonts/`，在 Slint 事件循环开始前注册为中文回退字体。字体采用 SIL Open Font License 1.1，许可文本随字体保存在 `public/fonts/OFL.txt`。
 
 ```powershell
 cd web
