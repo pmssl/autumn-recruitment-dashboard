@@ -22,6 +22,27 @@ Rust + Slint Cloudflare Pages 网页版已部署在 [秋招看板网页](https:/
 
 [![数据统计页面](docs/images/statistics.png)](docs/images/statistics.png)
 
+## Cloudflare Pages 部署
+
+网页版把 Rust + Slint 界面编译为 WebAssembly，由同一个 Cloudflare Pages 项目提供静态页面和 `/api/data` 接口；接口通过 Pages Functions 读写 D1。浏览器只使用访问口令，不直接连接 D1。现有部署可访问 [秋招看板网页](https://autumn-dashboard-5dabf352e76a.pages.dev/)。
+
+首次部署只需配置一个 Cloudflare API Token：
+
+1. 在 Cloudflare 创建仅授权目标账号的 Token，授予 **Cloudflare Pages: Edit** 和 **D1: Edit** 权限，并允许列出授权账号。Token 若能访问多个账号，部署脚本会停止，避免创建到错误账号。
+2. 在 GitHub 仓库 **Settings → Secrets and variables → Actions** 添加 Repository Secret `CLOUDFLARE_API_TOKEN`。不要把 Token 写进代码、README 或网页登录框。
+3. 推送 `web/`、共享 Slint 界面或相关 Rust 模块的更改到 `main`，或手动运行 [Deploy autumn dashboard to Cloudflare Pages](https://github.com/pmssl/autumn-recruitment-dashboard/actions/workflows/pages.yml)。工作流会测试、构建，并自动创建或复用 Pages 项目和 D1 数据库、绑定数据库、执行迁移及发布；以后相关代码推送会自动更新部署。仅修改本 README 不会触发部署。
+
+首次部署的网页地址可在工作流日志中查看，格式为 `https://<项目名>.pages.dev`。登录使用由 Token 派生的**网页访问口令**，不是 Cloudflare API Token。在安装 Node.js 22+ 的本机设置相同的 Token 后运行：
+
+```powershell
+cd web
+$env:CLOUDFLARE_API_TOKEN = '<你的 Cloudflare API Token>'
+npm ci
+npm run access-token
+```
+
+网页版 D1 与原生 EXE 旁的 `data/applications.json` 相互独立，不会自动同步。首次部署后如需导入现有数据，请先备份并按 [网页版部署与数据导入说明](web/README.md) 操作；导入脚本只接受空的云端看板，避免覆盖已有记录。
+
 ## 当前版本：v2.0.8 原生便携版
 
 当前主版本采用 Rust + Slint。可从 [v2.0.8 发布页](https://github.com/pmssl/autumn-recruitment-dashboard/releases/tag/v2.0.8)直接下载 Windows x64 的 `autumn-native.exe`，放在可写目录后双击运行，无需安装；ZIP 是含同一 EXE 和说明文件的可选压缩包。无需安装 Node.js 或浏览器运行时。
